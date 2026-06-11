@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Brainstorm session files
+.superpowers/
+
+# Extraction scripts and temp data
+extract_*.py
+build_*.py
+wc2026_teams_data.json
+kimi_*.json
+
+# Full markdown export (674KB — too large for repo)
+kimi-report-full.md
+
+# Original PDF (5MB)
+kimireport.pdf
+
+# OS files
+.DS_Store
+Thumbs.db

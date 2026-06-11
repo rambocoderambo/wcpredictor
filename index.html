@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='oklch(0.5 0.12 170)'/><text x='16' y='22' text-anchor='middle' font-size='18' font-weight='bold' fill='white'>⚽</text></svg>">
+<title>WC Predictor – Asian Handicap Analysis</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:oklch(1 0 0);--surface:oklch(0.97 0.003 170);--ink:oklch(0.15 0.008 170);--primary:oklch(0.5 0.12 170);--primary-hover:oklch(0.45 0.12 170);--accent:oklch(0.55 0.15 35);--accent-hover:oklch(0.5 0.15 35);--muted:oklch(0.42 0.008 170);--border:oklch(0.88 0.005 170);--success:oklch(0.55 0.15 145);--error:oklch(0.55 0.2 25);--warning:oklch(0.65 0.15 85);--high-bg:oklch(0.92 0.04 145);--high-text:oklch(0.3 0.08 145);--med-bg:oklch(0.92 0.04 85);--med-text:oklch(0.35 0.08 85);--low-bg:oklch(0.92 0.04 25);--low-text:oklch(0.35 0.08 25);--font:system-ui,-apple-system,sans-serif;--mono:ui-monospace,'SF Mono',monospace}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:720px;margin:0 auto;padding:2rem 1.5rem}
+.header{margin-bottom:2.5rem}
+.header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem}
+.header h1 span{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--primary);align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700}
+.header .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
+.section{margin-bottom:2rem}
+.section-title{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.75rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem}
+.form-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:center;margin-bottom:1.25rem}
+.form-grid .vs{color:var(--muted);font-size:.85rem;font-weight:600}
+select,input{font-family:var(--font);font-size:.875rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;outline:none;transition:border-color .15s}
+select:focus,input:focus{border-color:var(--primary)}
+select:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+input[type=number]{font-family:var(--mono);text-align:center;width:100%}
+.odds-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;align-items:center;margin-bottom:.5rem;padding:.5rem;border-radius:6px;transition:background .15s}
+.odds-row:hover{background:var(--surface)}
+.odds-row .label{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.odds-row .label span{display:block;font-weight:400;color:var(--muted);font-size:.7rem;text-transform:none;letter-spacing:0;margin-top:1px}
+.btn{font-family:var(--font);font-size:.875rem;font-weight:600;padding:.6rem 1.25rem;border-radius:6px;border:none;cursor:pointer;transition:background .15s,transform .05s;display:inline-flex;align-items:center;gap:.4rem;min-height:44px}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important}}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-ghost{background:transparent;color:var(--muted);padding:.4rem .75rem;font-size:.8rem}
+.btn-ghost:hover{color:var(--ink)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent-hover)}
+.btn-danger{background:transparent;color:var(--error);padding:.4rem .75rem;font-size:.8rem;border:1px solid transparent}
+.btn-danger:hover{border-color:var(--error)}
+.btn-group{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
+.results{display:none;margin-top:1.5rem}
+.results.visible{display:block}
+.best-pick{background:var(--surface);border:2px solid var(--primary);border-radius:10px;padding:1.25rem;margin-bottom:1rem;position:relative}
+.best-pick .badge{position:absolute;top:-10px;left:1rem;background:var(--primary);color:#fff;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .6rem;border-radius:4px}
+.best-pick .match{font-size:1.1rem;font-weight:700;margin-bottom:.25rem}
+.best-pick .pick{font-size:1.05rem;color:var(--primary);font-weight:600;margin-bottom:.25rem}
+.best-pick .pick strong{font-weight:700}
+.best-pick .meta{font-size:.8rem;color:var(--muted);display:flex;gap:1rem;flex-wrap:wrap}
+.conf-high{display:inline-block;background:var(--high-bg);color:var(--high-text);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .5rem;border-radius:4px}
+.conf-med{display:inline-block;background:var(--med-bg);color:var(--med-text);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .5rem;border-radius:4px}
+.conf-low{display:inline-block;background:var(--low-bg);color:var(--low-text);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .5rem;border-radius:4px}
+.options-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.75rem}
+.options-table th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:.5rem;border-bottom:1px solid var(--border);white-space:nowrap}
+.options-table th.num{text-align:right;font-size:.85rem;font-weight:600;font-family:var(--mono);text-transform:none;letter-spacing:0}
+.options-table td{padding:.5rem;border-bottom:1px solid var(--border)}
+.options-table tr:last-child td{border-bottom:none}
+.options-table .num{font-family:var(--mono);text-align:right}
+.options-table .best{background:oklch(0.95 0.02 170);border-radius:4px}
+.reasoning{margin-top:1rem;padding:.75rem;background:var(--surface);border-radius:6px;font-size:.825rem;color:var(--muted);line-height:1.6;border-left:3px solid var(--primary);white-space:pre-line}
+.reasoning strong{color:var(--ink)}
+.ti{cursor:help;font-size:.65rem;color:var(--muted);margin-left:1px}
+.history-item{display:grid;grid-template-columns:1fr auto auto auto auto;gap:.5rem;align-items:center;padding:.6rem .75rem;font-size:.8rem;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.history-item .h-match{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-item .h-pick{font-family:var(--mono);font-size:.775rem;color:var(--primary)}
+.history-item .h-odds{font-family:var(--mono);font-size:.775rem}
+.history-item .h-result{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:3px;padding:.1rem .35rem}
+.history-item .h-result.pending{background:var(--surface);color:var(--muted)}
+.history-item .h-result.won{background:var(--high-bg);color:var(--high-text)}
+.history-item .h-result.lost{background:var(--low-bg);color:var(--low-text)}
+.history-item .h-actions{display:flex;gap:.25rem}
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.875rem}
+.team-info{display:none;margin-top:.75rem;padding:.75rem;background:var(--surface);border-radius:6px;font-size:.8rem;border:1px solid var(--border)}
+.team-info.visible{display:block}
+.team-info .ti-row{display:flex;justify-content:space-between;padding:.2rem 0}
+.team-info .ti-label{color:var(--muted)}
+.team-info .ti-value{font-weight:500}
+.form-note{font-size:.75rem;color:var(--muted);margin-top:.4rem}
+@media(max-width:560px){
+.container{padding:1rem}
+.odds-row{grid-template-columns:1fr}
+.history-item{grid-template-columns:1fr auto;gap:.25rem}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1><span style="background:none;border-radius:4px;overflow:hidden;padding:0;width:auto;height:auto"><img src="wc2026-logo.jpg" alt="WC" style="height:32px;width:32px;display:block;border-radius:4px"></span> WC Predictor</h1>
+    <div class="sub">Asian handicap analysis &amp; prediction engine based off</div>
+    <div class="sub"><a href="https://x.com/Kimi_Moonshot/status/2064311212243120459" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi to predict all 104 World Cup matches</a>.</div>
+    <div class="sub"><a href="https://gtfehbkpbwzco.kimi.page" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi's Agent Swarm coordinates 300 sub-agents to reason in parallel</a> · 277-page report</div>
+  </div>
+
+  <div class="section">
+    <div class="card">
+      <div class="form-grid">
+        <select id="teamA" aria-label="Select Team A"><option value="">Select Team A</option></select>
+        <div class="vs">vs</div>
+        <select id="teamB" aria-label="Select Team B"><option value="">Select Team B</option></select>
+      </div>
+
+      <div id="teamInfoA" class="team-info"></div>
+      <div id="teamInfoB" class="team-info"></div>
+
+      <div style="margin-bottom:.75rem;font-size:.8rem;color:var(--muted);padding:.5rem;background:var(--surface);border-radius:6px;border:1px solid var(--border);margin-bottom:.75rem">
+        Each handicap line has <strong>two prices</strong>: one for <strong>Team A (home)</strong> to cover, one for <strong>Team B (away)</strong> to cover. The engine evaluates all 6 bets.
+      </div>
+      <div style="margin-bottom:.75rem">
+        <div class="odds-row" style="padding:0 0 .25rem;margin-bottom:0;grid-template-columns:1fr 1.2fr 1.2fr">
+          <div class="label">Handicap <span>e.g. -0.5, +0.25</span></div>
+          <div class="label" id="homeLabel" style="text-align:center">Team A (Home) <span>odds</span></div>
+          <div class="label" id="awayLabel" style="text-align:center">Team B (Away) <span>odds</span></div>
+        </div>
+        <div class="odds-row" style="grid-template-columns:1fr 1.2fr 1.2fr">
+          <input type="text" id="h1" placeholder="-0.5" class="handicap-input">
+          <input type="number" id="o1h" placeholder="1.85" step="0.01" min="1" class="odds-input">
+          <input type="number" id="o1a" placeholder="2.05" step="0.01" min="1" class="odds-input">
+        </div>
+        <div class="odds-row" style="grid-template-columns:1fr 1.2fr 1.2fr">
+          <input type="text" id="h2" placeholder="-0.75" class="handicap-input">
+          <input type="number" id="o2h" placeholder="1.95" step="0.01" min="1" class="odds-input">
+          <input type="number" id="o2a" placeholder="2.15" step="0.01" min="1" class="odds-input">
+        </div>
+        <div class="odds-row" style="grid-template-columns:1fr 1.2fr 1.2fr">
+          <input type="text" id="h3" placeholder="-1" class="handicap-input">
+          <input type="number" id="o3h" placeholder="2.10" step="0.01" min="1" class="odds-input">
+          <input type="number" id="o3a" placeholder="1.85" step="0.01" min="1" class="odds-input">
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-ghost" onclick="loadSample()">Sample</button>
+        <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+        <button class="btn btn-primary" onclick="analyze()">Analyze</button>
+      </div>
+    </div>
+
+    <div id="results" class="results"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Report Overview</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:1.5rem">
+      <div><strong style="color:var(--ink)">277</strong> pages · <strong style="color:var(--ink)">114</strong> tables</div>
+      <div><strong style="color:var(--ink)">62.5%</strong> backtest (2018/22)</div>
+      <div><strong style="color:var(--ink)">300</strong> agents · <strong style="color:var(--ink)">20</strong> dimensions</div>
+      <div>Most probable final: <strong style="color:var(--ink)">ARG-ESP 2.72%</strong></div>
+      <div><strong style="color:var(--ink)">48</strong> teams · <strong style="color:var(--ink)">104</strong> matches</div>
+      <div><span title="Estimated total flight distance across 16 host cities in 4 timezones. Affects player fatigue and recovery." style="cursor:help"><span class="ti">ⓘ</span>Group-stage travel</span>: <strong style="color:var(--ink)">3,400km (NOR) – 28,000km (AUS)</strong></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Analysis History</div>
+    <div class="card" id="historyContainer">
+      <div class="empty" id="emptyHistory">No predictions yet. Enter a match above.</div>
+    </div>
+    <div id="historyActions" style="display:none;margin-top:.5rem;gap:.4rem;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="exportPredictions()" style="font-size:.8rem">Export</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('importInput').click()" style="font-size:.8rem">Import</button>
+      <button class="btn btn-danger" onclick="clearHistory()" style="font-size:.8rem">Clear All</button>
+      <input type="file" id="importInput" accept=".json" style="display:none" onchange="importPredictions(this)">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Tournament Context</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem">
+      <div><strong style="color:var(--ink)">3rd-place qualifying:</strong><br>4pts=98%<br>3pts+GD≈75%<br>3pts≈50%<br>2pts&lt;10%</div>
+      <div><strong style="color:var(--ink)">Monte Carlo finals:</strong><br>ARG-ESP 2.72%<br>ARG-FRA 2.16%<br>ENG-ESP 1.83%</div>
+      <div><strong style="color:var(--ink)">Travel range:</strong> 3,400km (NOR) – 28,000km (AUS) <span title="Estimated total flight distance across 16 host cities in 4 timezones. Affects player fatigue and recovery between matches." style="cursor:help">ⓘ</span></div>
+      <div><strong style="color:var(--ink)">Format:</strong><br>39 days<br>104 matches<br>16 cities<br>4 timezones</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Prediction Data Structure</div>
+    <div style="font-size:.75rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;line-height:1.7">
+      <strong style="color:var(--ink)">Team profile (48 teams):</strong> FIFA rank · Elo rating · win rate · goals for/against · AH cover rate · form · cards · injuries · manager · squad age · travel distance · group qual % · title prob · semi/QF prob · Polymarket odds · market divergence · home advantage · momentum</span>
+      <span style="display:block;margin-top:.2rem"><strong style="color:var(--ink)">Match-level:</strong> head-to-head win/draw/loss % (Kimi) · upset probability · match prediction confidence</span>
+      <span style="display:block;margin-top:.2rem"><strong style="color:var(--ink)">Tournament-level:</strong> group stage format · 8-match champion path · third-place thresholds · venue altitude · heat risk · travel fatigue · 16-city climate · Monte Carlo bracket sims · historical backtest calibration</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== KIMI REPORT: FULL DATA INTEGRATION (all 277 pages) =====
+// Source: Kimi 2026 World Cup Analysis Report · 300 agents · 20 dimensions · 48 teams · 104 matches
+
+const GROUPS = {A:["Mexico","South Korea","Czech Republic","South Africa"],B:["Switzerland","Canada","Bosnia and Herzegovina","Qatar"],C:["Brazil","Morocco","Scotland","Haiti"],D:["United States","Turkey","Australia","Paraguay"],E:["Germany","Ecuador","Ivory Coast","Curacao"],F:["Netherlands","Japan","Sweden","Tunisia"],G:["Belgium","Egypt","Iran","New Zealand"],H:["Spain","Uruguay","Saudi Arabia","Cape Verde"],I:["France","Senegal","Norway","Iraq"],J:["Argentina","Austria","Algeria","Jordan"],K:["Portugal","Colombia","Uzbekistan","DR Congo"],L:["England","Croatia","Ghana","Panama"]};
+
+// VERSION 2.0: Official Elo ratings from Kimi Table 1.4 (page 20 of report)
+const ELO = {"Spain":2090,"Argentina":2047,"France":2041,"Brazil":1990,"England":1974,"Colombia":1970,"Portugal":1967,"Netherlands":1951,"Germany":1940,"Morocco":1918,"Croatia":1895,"Uruguay":1882,"Switzerland":1868,"Japan":1845,"Senegal":1832,"Iran":1818,"South Korea":1805,"Ecuador":1798,"Australia":1785,"Austria":1780,"Mexico":1770,"United States":1765,"Canada":1730,"Norway":1725,"Turkey":1720,"Sweden":1715,"Egypt":1710,"Belgium":1700,"Ghana":1690,"Tunisia":1685,"Algeria":1680,"Ivory Coast":1675,"Paraguay":1670,"Saudi Arabia":1660,"Scotland":1655,"Panama":1650,"Bosnia and Herzegovina":1645,"Czech Republic":1640,"Uzbekistan":1635,"Qatar":1630,"South Africa":1625,"DR Congo":1620,"Iraq":1615,"Jordan":1610,"Cape Verde":1605,"Haiti":1600,"New Zealand":1595,"Curacao":1585};
+
+// Elo-FIFA rank differential (positive = Elo rates higher, from Table 1.4)
+const ELO_DIFF = {"Spain":0,"Argentina":0,"France":0,"Brazil":1,"England":-1,"Colombia":3,"Portugal":-1,"Netherlands":-1,"Germany":1,"Morocco":-2,"Croatia":0,"Uruguay":1,"Switzerland":1,"Japan":1,"Senegal":-3,"Iran":1,"South Korea":2,"Ecuador":2,"Australia":2,"Austria":-4};
+
+// Market-implied title probability ranges (from Table 1.4)
+const MARKET_TITLE_RANGE = {"Spain":"14.6%-20.0%","Argentina":"11.7%-11.8%","France":"11.2%-16.7%","Brazil":"6.7%-12.5%","England":"5.7%-15.4%","Colombia":"5.4%","Portugal":"5.2%-9.1%","Netherlands":"3.9%-4.8%","Germany":"3.7%-10.0%","Morocco":"2.8%","Croatia":"<2%","Uruguay":"<2%","Switzerland":"<1%","Japan":"<1%","Senegal":"<1%","Iran":"<1%","South Korea":"<1%","Ecuador":"<1%","Australia":"<1%","Austria":"<1%"};
+
+// Group qualification matrices [1st%, 2nd%, 3rd%, eliminated%] (Kimi Ch.4)
+const GROUP_QUAL = {"A":{"Mexico":[47.8,25,9.2,18],"South Korea":[22,30,15,33],"Czech Republic":[15,20,20,45],"South Africa":[5,10,18,67]},"B":{"Switzerland":[40,28,12,20],"Canada":[18,22,15,45],"Bosnia and Herzegovina":[15,20,18,47],"Qatar":[8,12,15,65]},"C":{"Brazil":[60.2,25,8,6.6],"Morocco":[28.6,45,15.1,11.3],"Scotland":[9.8,22,28,40.2],"Haiti":[1.1,3,15,80.9]},"D":{"United States":[32.8,28,15,24.2],"Turkey":[20,22,16,42],"Australia":[17.9,25,18,39.1],"Paraguay":[8,10,15,67]},"E":{"Germany":[69,25,4,2],"Ecuador":[20,45,18,17],"Ivory Coast":[8,15,25,52],"Curacao":[1,3,10,86]},"F":{"Netherlands":[55,20,12,13],"Japan":[25,30,18,27],"Sweden":[10,22,28,40],"Tunisia":[5,10,18,67]},"G":{"Belgium":[45,28,12,15],"Egypt":[20,22,18,40],"Iran":[15,20,18,47],"New Zealand":[5,8,12,75]},"H":{"Spain":[75.3,18,4,2.7],"Uruguay":[18,50,17,15],"Saudi Arabia":[5,15,22,58],"Cape Verde":[2,5,15,78]},"I":{"France":[60.3,22,8,9.7],"Senegal":[15,28,22,35],"Norway":[12,20,23,45],"Iraq":[3,5,12,80]},"J":{"Argentina":[73,18,5,4],"Austria":[12,30,23,35],"Algeria":[8,15,22,55],"Jordan":[3,10,18,69]},"K":{"Portugal":[73.6,20,4.1,2.3],"Colombia":[18,38,22,22],"Uzbekistan":[5,12,25,58],"DR Congo":[2,5,15,78]},"L":{"England":[67.9,18,6,8.1],"Croatia":[15,38,27,20],"Ghana":[7,15,22,56],"Panama":[3,8,15,74]}};
+
+// Injury Risk Matrix (Kimi Table 8.6)
+const INJURY_MATRIX = {"Argentina":["Messi (hamstring 15%)","Romero (knee 20%)"],"Brazil":["Rodrygo (ACL 100% out)","Militao (hamstring 30%)","Neymar (calf 25%)"],"Netherlands":["De Jong (hamstring 15%)"],"France":["Mbappe (calf 5%)"],"England":["Kane (ankle 10%)"],"Germany":["Musiala (ACL recovery 8%)"]};
+
+// Third-place qualification thresholds (Kimi Ch.4.13)
+const THIRD_PLACE = {"4pts":"98% guaranteed","3pts+GD":"~75%","3pts":"~50%","3pts-GD":"~25%","2pts":"<10%"};
+
+// Historical backtesting accuracy (Kimi Ch.9.4)
+const BACKTEST = {"2018 GS":"62.5%","2022 GS":"60.4%","2018 fav wins":"68.2%","2022 fav wins":"65.1%"};
+
+// Monte Carlo most probable finals (Kimi Ch.1.2.2)
+const MC_FINALS = ["Argentina vs Spain 2.72%","Argentina vs France 2.16%","England vs Spain 1.83%"];
+
+// Travel distance estimate (km, Kimi Ch.6.2)
+const TRAVEL = {"Australia":28000,"New Zealand":26000,"Japan":18000,"South Korea":17500,"Saudi Arabia":16000,"Iran":15000,"Qatar":14500,"Uzbekistan":14000,"Jordan":13500,"Iraq":13000,"South Africa":12000,"Morocco":11000,"Senegal":10500,"DR Congo":10000,"Ghana":9500,"Egypt":9000,"Uruguay":9000,"Argentina":8500,"Algeria":8500,"Paraguay":8500,"Brazil":8000,"Ivory Coast":8000,"Tunisia":7500,"Cape Verde":7000,"Ecuador":7000,"Haiti":6500,"Colombia":6500,"Panama":6000,"Scotland":6000,"Canada":5500,"United States":5500,"Sweden":5500,"Turkey":5000,"Bosnia and Herzegovina":5000,"Mexico":5000,"Czech Republic":4500,"Spain":4500,"Portugal":4300,"France":4200,"England":4100,"Netherlands":4000,"Germany":3900,"Belgium":3800,"Switzerland":3700,"Austria":3600,"Croatia":3500,"Norway":3400};
+
+// Schedule density (Kimi Ch.6.1)
+const SCHEDULE = {days:39,matches:104,group:72,ko:32,champ_m:8,gs_days:17,interval:4.4,ko_window:22,ko_m:5,subs:5,squad:26};
+
+// 2026 WC report metadata
+const REPORT = {agents:300,dims:15,pages:277,date:"June 5, 2026",source:"Kimi Multi-Agent System v1.0"};
+
+// Home advantage (Kimi Ch.6.6) — host nations get quantified boost
+const HOME_ADV = {"Mexico":82,"United States":75,"Canada":55};
+const HOST_KO_RATE = 91; // 91% of hosts advance from group
+
+// Altitude (Kimi Ch.6.5) — Mexico City 2,240m = 25% less oxygen
+const ALTITUDE = {"Mexico City":2240,"Guadalajara":1540,"Monterrey":512,"Dallas":131,"Kansas City":273,"Atlanta":320,"Houston":15,"San Francisco":5,"Los Angeles":21,"Seattle":50,"Boston":76,"Philadelphia":12,"Miami":3,"Vancouver":18,"Toronto":79};
+const HIGH_ALT_CITIES = ["Mexico City","Guadalajara"];
+
+// Heat risk cities (Kimi Ch.6.4) — WBGT extreme
+const HEAT_RISK = ["Houston","Dallas","Miami"];
+
+// Squad ages (Kimi Ch.3)
+const SQUAD_AGE = {"Spain":26.1,"France":27.4,"Argentina":28.8,"Brazil":28.6,"England":26.5,"Germany":27.1,"Portugal":28,"Netherlands":27.8,"Belgium":28.5,"Croatia":29.2,"Uruguay":28.3,"Japan":27.2,"Mexico":28.1,"USA":26.8,"Canada":27.5};
+const GOLDEN_WINDOW = "25-28yr (champ avg 26.91)";
+
+// Momentum streaks (Kimi Ch.3)
+const STREAKS = {"Spain":"33 unbeaten","Argentina":"4 straight titles"};
+
+// Managers (Kimi Ch.3+4)
+const MANAGERS = {"Spain":"De la Fuente","France":"Deschamps","Argentina":"Scaloni","Brazil":"Ancelotti","England":"Tuchel","Germany":"Nagelsmann","Portugal":"Martinez","Netherlands":"Koeman","Belgium":"Tedesco","Croatia":"Dalic","Uruguay":"Bielsa","Japan":"Moriyasu","South Korea":"Hong","USA":"Pochettino","Mexico":"Aguirre","Canada":"Marsch","Morocco":"Regragui","Senegal":"Cisse","Austria":"Rangnick","Switzerland":"Yakin"};
+
+// Polymarket odds (Kimi Ch.1.4)
+const POLYMARKET = {"Spain":17,"France":16,"Argentina":10,"Brazil":10,"Germany":7.4};
+
+// Complete championship probability rankings (Table 8.1 + 8.2) — all 48 teams
+const CHAMP_PROB_ALL = {"Spain":16.5,"France":15,"Argentina":12,"England":11,"Brazil":9.5,"Germany":8.5,"Portugal":7,"Netherlands":4.5,"Belgium":3,"Croatia":2.5,"Uruguay":2,"Morocco":1.8,"Colombia":1.5,"Japan":1.2,"Switzerland":1,"Senegal":0.8,"Mexico":0.7,"USA":0.6,"Ecuador":0.5,"Austria":0.4,"Iran":0.3,"South Korea":0.3,"Norway":0.25,"Sweden":0.2,"Turkey":0.18,"Australia":0.15,"Canada":0.12,"Egypt":0.1,"Algeria":0.08,"Ivory Coast":0.06,"Paraguay":0.05,"Saudi Arabia":0.04,"Scotland":0.03,"Ghana":0.03,"Panama":0.02,"Tunisia":0.02,"Czech Republic":0.02,"Bosnia and Herzegovina":0.02,"Qatar":0.01,"South Africa":0.01,"Uzbekistan":0.01,"DR Congo":0.01,"Iraq":0.01,"Jordan":0.01,"Cape Verde":0.01,"Haiti":0.01,"New Zealand":0.01,"Curacao":0.01};
+
+// Semi-final probabilities (Table 8.4)
+const SEMI_PROB = {"Spain":33.9,"France":30,"Argentina":28,"England":25,"Germany":22,"Brazil":20,"Portugal":18,"Netherlands":15,"Belgium":12,"Croatia":10,"Uruguay":8,"Morocco":7,"Colombia":6,"Japan":5,"Switzerland":4.5,"Senegal":4,"Mexico":3.5,"USA":3,"Ecuador":2.5,"Austria":2};
+
+// Quarter-final probabilities (Table 8.5)
+const QF_PROB = {"Spain":65,"France":60,"Argentina":55,"England":50,"Germany":48,"Brazil":45,"Portugal":42,"Netherlands":35,"Belgium":30,"Croatia":28,"Morocco":25,"Uruguay":22,"Colombia":20,"Japan":18,"Switzerland":17,"Senegal":15};
+
+// Heat risk zones (Table 6.4)
+const HEAT_ZONES = {"Miami":"extreme","Dallas":"high","Houston":"high","Monterrey":"high","Atlanta":"moderate","Kansas City":"moderate","Philadelphia":"moderate","Los Angeles":"moderate","New York":"moderate","Boston":"moderate","Seattle":"low","Vancouver":"low","San Francisco":"low","Toronto":"low","Guadalajara":"low","Mexico City":"low"};
+
+// Altitude impact (Table 6.5)
+const ALT_IMPACT = {"Mexico City":{o2:"-25%",vo2:"7-12%",adapt:14},"Guadalajara":{o2:"-15%",vo2:"4-7%",adapt:7},"Monterrey":{o2:"-5%",vo2:"1-3%",adapt:2}};
+
+// Detailed backtesting (Table 9.7 + 9.8 + 9.9)
+const BACKTEST_DETAIL = {"2018 GS":62.5,"2022 GS":60.4,"2018 fav":68.2,"2022 fav":65.1,"2018 under":31.8,"2022 under":34.9,"2018 exact":8.3,"2022 exact":7.8,"past champs":"4th/3rd/2nd/4th favorite"};
+
+// Set-piece upset candidates (Table 5.2)
+const SP_UPSETS = "Set-piece threats: Germany aerial, Croatia efficiency, Iran corners, Morocco dead-ball";
+
+// Opening match predictions {home%, draw%, away%} (Kimi Ch.4.14 + group analysis)
+const MATCH_PRED = {"Mexico vs South Africa":[70,20,10],"South Korea vs Czech Republic":[33,34,33],"Canada vs Bosnia and Herzegovina":[45,30,25],"Qatar vs Switzerland":[5,15,80],"Brazil vs Morocco":[45,30,25],"Haiti vs Scotland":[15,20,65],"USA vs Paraguay":[60,25,15],"Australia vs Turkey":[35,30,35],"Germany vs Curacao":[96,2,2],"Ivory Coast vs Ecuador":[20,30,50],"Netherlands vs Japan":[45,30,25],"Sweden vs Tunisia":[45,35,20],"Belgium vs New Zealand":[85,10,5],"Egypt vs Iran":[35,40,25],"Spain vs Cape Verde":[92,6,2],"Uruguay vs Saudi Arabia":[65,25,10],"France vs Senegal":[50,30,20],"Iraq vs Norway":[10,20,70],"Argentina vs Algeria":[80,15,5],"Austria vs Jordan":[65,20,15],"Portugal vs DR Congo":[92,6,2],"Colombia vs Uzbekistan":[70,20,10],"England vs Croatia":[45,35,20],"Ghana vs Panama":[50,30,20]};
+
+// Key upset probabilities (Kimi Ch.5)
+const UPSETS = {"Morocco vs Brazil":25,"Japan vs Netherlands":25,"Turkey vs USA":29,"Colombia vs Portugal":27};
+
+// Market odds divergence (Kimi Ch.9.5) — positive = model > market
+const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Brazil":-2.1,"Argentina":0.9};
+
+// Championship title probabilities (Kimi Ch.8)
+const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
+
+const TEAM_DATA = {
+  "Mexico":{g:"A",p:82,elo:1770,fifaRank:15,wr:.58,gs:1.5,gc:.9,ah:.5,qual:"82%",injuries:"Jimenez fit at 35. Alvarez captain.",cards:1.9,reds:0,form:"W-D-W-L-D",np:"Host. All 3 matches Azteca (2,240m). Shortest travel (5,163km). Always R16."},
+  "South Korea":{g:"A",p:67,elo:1805,fifaRank:25,wr:.67,gs:1.7,gc:.7,ah:.55,qual:"67%",injuries:"Son Heung-min 33. Kim Min-jae, Lee Kang-in fit.",cards:1.7,reds:1,form:"W-W-D-W-D",np:"Beat Portugal 2022. Over-reliant on Son."},
+  "Czech Republic":{g:"A",p:55,elo:1640,fifaRank:41,wr:.52,gs:1.3,gc:1,ah:.45,qual:"55%",injuries:"Squad from Bundesliga & PL.",cards:1.6,reds:0,form:"W-D-W-L-D",np:"Physical, disciplined. Beat Denmark in play-offs. 20yr absence."},
+  "South Africa":{g:"A",p:33,elo:1625,fifaRank:60,wr:.40,gs:1,gc:1.4,ah:.35,qual:"33%",injuries:"Domestic league squad.",cards:2,reds:1,form:"W-L-D-W-L",np:"Need to perform above natural level."},
+  "Switzerland":{g:"B",p:78,elo:1868,fifaRank:19,wr:.62,gs:1.4,gc:.7,ah:.52,qual:"78%",injuries:"Xhaka 144 caps. Akanji fit.",cards:1.5,reds:0,form:"W-D-W-W-D",np:"Progression 2014-2022. 2 GA in 6 qualifiers. Limited attack."},
+  "Canada":{g:"B",p:55,elo:1730,fifaRank:30,wr:.50,gs:1.3,gc:1.1,ah:.40,qual:"55%",injuries:"Davies world-class. David 6G for Juve form slump.",cards:2,reds:1,form:"W-D-L-W-L",np:"Co-host. Marsch high-press. 3rd WC. Profligate up front."},
+  "Bosnia and Herzegovina":{g:"B",p:53,elo:1645,fifaRank:52,wr:.45,gs:1.1,gc:1.3,ah:.38,qual:"53%",injuries:"Dzeko 40 last dance.",cards:2.1,reds:1,form:"W-D-W-L-D",np:"Biggest unknown in Group B."},
+  "Qatar":{g:"B",p:35,elo:1630,fifaRank:35,wr:.42,gs:1,gc:1.5,ah:.35,qual:"35%",injuries:"2022 hosting experience.",cards:2,reds:0,form:"L-L-D-W-L",np:"3 defeats as 2022 hosts. Lacks high-intensity exposure."},
+  "Brazil":{g:"C",p:92,elo:2050,fifaRank:6,wr:.58,gs:1.7,gc:1,ah:.50,qual:"92%",injuries:"Neymar recovery. Rodrygo ACL out. Militao out.",cards:1.9,reds:1,form:"D-W-W-L-W",np:"Ancelotti. Vinicius peak. Midfield deficit. Age 28.6. Worst qual (5th). Title 10.5%."},
+  "Morocco":{g:"C",p:88.7,elo:1918,fifaRank:8,wr:.68,gs:1.6,gc:.5,ah:.60,qual:"88.7%",injuries:"Hakimi fit. Ziyech 33. En-Nesyri fit.",cards:1.7,reds:0,form:"W-W-D-W-W",np:"2022 semi-finalist. 2025 AFCON winner. Best African team."},
+  "Scotland":{g:"C",p:60,elo:1655,fifaRank:47,wr:.45,gs:1.1,gc:1.2,ah:.38,qual:"60%",injuries:"Squad from English league.",cards:1.8,reds:0,form:"W-L-W-D-L",np:"First WC in 28yr. Lowest xG (+0.8) of qualified Europeans."},
+  "Haiti":{g:"C",p:19,elo:1600,fifaRank:83,wr:.30,gs:.7,gc:1.8,ah:.25,qual:"19%",injuries:"Historic return 52yr.",cards:2.2,reds:1,form:"L-W-D-L-L",np:"Lowest qual prob of all 48 teams. Historic return."},
+  "United States":{g:"D",p:75,elo:1765,fifaRank:16,wr:.60,gs:1.6,gc:.9,ah:.48,qual:"75%",injuries:"Pulisic capt. McKennie, Reyna, Adams fit.",cards:1.8,reds:0,form:"W-D-W-L-W",np:"Co-host. Pochettino. Lowest host group-win (32.8%). Copa 2024 exit baggage."},
+  "Turkey":{g:"D",p:58,elo:1720,fifaRank:42,wr:.48,gs:1.2,gc:1.1,ah:.40,qual:"58%",injuries:"Arda Guler (Real). Calhanoglu. Full squad.",cards:2,reds:1,form:"W-W-D-L-W",np:"Play-off dark horses. Guler creative spark. 29% upset vs USA."},
+  "Australia":{g:"D",p:61,elo:1785,fifaRank:26,wr:.52,gs:1.3,gc:.9,ah:.42,qual:"61%",injuries:"Asian Cup champions. Tactically disciplined.",cards:1.6,reds:0,form:"W-W-D-W-D",np:"Asian champions. Disciplined. No world-class talent."},
+  "Paraguay":{g:"D",p:33,elo:1670,fifaRank:64,wr:.38,gs:.9,gc:1.3,ah:.32,qual:"33%",injuries:"Alfaro mgr. 16yr absence.",cards:2.1,reds:1,form:"D-L-W-D-L",np:"Defensively resolute. Offensively anaemic. Draw specialists."},
+  "Germany":{g:"E",p:99.4,elo:1940,fifaRank:10,wr:.70,gs:2.1,gc:.8,ah:.60,qual:"99.4%",injuries:"Musiala, Wirtz, Havertz, Kimmich fit. Neuer 40.",cards:1.4,reds:0,form:"W-W-W-D-W",np:"Most underestimated (+3.6pp divergence). 998M squad. Market 7.4% vs model 11.5%. Title 10.5%."},
+  "Ecuador":{g:"E",p:83,elo:1798,fifaRank:24,wr:.58,gs:1.5,gc:.7,ah:.50,qual:"83%",injuries:"Caicedo, Hincapie, Pacho fit. Paez 18yo.",cards:1.9,reds:0,form:"W-D-W-W-D",np:"Best CONMEBOL defence (5 GA/18). High altitude acclimatized."},
+  "Ivory Coast":{g:"E",p:48,elo:1675,fifaRank:33,wr:.50,gs:1.2,gc:1,ah:.42,qual:"48%",injuries:"AFCON champions. Strong physical.",cards:1.7,reds:0,form:"W-D-W-L-W",np:"AFCON champs. Physical but lacks tactical discipline."},
+  "Curacao":{g:"E",p:14,elo:1585,fifaRank:81,wr:.28,gs:.7,gc:2,ah:.22,qual:"14%",injuries:"Advocaat mgr. Pop 150,000.",cards:2.3,reds:1,form:"L-L-D-L-W",np:"Smallest nation ever at WC. 71-place gap with Germany."},
+  "Netherlands":{g:"F",p:87,elo:1951,fifaRank:7,wr:.68,gs:1.9,gc:.7,ah:.58,qual:"87%",injuries:"Van Dijk 34. De Jong injury prone. Simons ACL out.",cards:1.3,reds:0,form:"W-D-W-W-D",np:"World-class defence. No elite striker. Title prob 4%. Simons ACL key loss."},
+  "Japan":{g:"F",p:73,elo:1845,fifaRank:18,wr:.70,gs:1.8,gc:.6,ah:.60,qual:"73%",injuries:"Mitoma, Endo, Kubo, Tomiyasu fit.",cards:1.4,reds:0,form:"W-W-D-W-W",np:"Structural pressing. Beat Germany/Spain 2022. 31% to top group."},
+  "Sweden":{g:"F",p:60,elo:1715,fifaRank:39,wr:.48,gs:1.4,gc:1,ah:.40,qual:"60%",injuries:"Gyokeres red-hot. Beat Ukraine, Poland in play-offs.",cards:1.5,reds:0,form:"W-W-D-W-L",np:"Gyokeres clinical. Physical directness. Limited ceiling."},
+  "Tunisia":{g:"F",p:33,elo:1685,fifaRank:40,wr:.42,gs:1,gc:1.1,ah:.35,qual:"33%",injuries:"Tactically disciplined.",cards:1.8,reds:0,form:"D-W-L-D-W",np:"Compact defence. Lacks creativity. Draw strategists."},
+  "Belgium":{g:"G",p:85,elo:1700,fifaRank:9,wr:.65,gs:1.8,gc:.8,ah:.55,qual:"85%",injuries:"De Bruyne 34. Courtois returned. Lukaku fit.",cards:1.6,reds:1,form:"W-W-D-W-D",np:"Golden generation twilight. 2022 group exit. Doku new gen."},
+  "Egypt":{g:"G",p:60,elo:1710,fifaRank:29,wr:.55,gs:1.5,gc:.8,ah:.48,qual:"60%",injuries:"Salah fit. One-man team.",cards:1.5,reds:0,form:"W-D-W-W-D",np:"Salah brilliance. Unsustainable vs European elite."},
+  "Iran":{g:"G",p:53,elo:1818,fifaRank:21,wr:.52,gs:1.3,gc:.9,ah:.45,qual:"53%",injuries:"Most organized Asian side.",cards:1.7,reds:0,form:"W-D-L-W-D",np:"Formidable defence. Lacks attacking firepower."},
+  "New Zealand":{g:"G",p:25,elo:1595,fifaRank:95,wr:.35,gs:.9,gc:1.4,ah:.30,qual:"25%",injuries:"Oceania's first direct berth.",cards:1.9,reds:0,form:"W-D-L-D-W",np:"Defence-oriented. Can cause upset once."},
+  "Spain":{g:"H",p:97.3,elo:2165,fifaRank:2,wr:.78,gs:2.3,gc:.5,ah:.70,qual:"97.3%",injuries:"Rodri ACL recovery. Yamal hamstring. Pedri, Nico fit.",cards:1.2,reds:0,form:"W-W-W-W-D",np:"ELO #1. Euro2024 champs. 33 unbeaten. Opta fav 16.1%. Title 16.1%."},
+  "Uruguay":{g:"H",p:85,elo:1882,fifaRank:17,wr:.55,gs:1.3,gc:.8,ah:.48,qual:"85%",injuries:"Valverde. Nunez. Bielsa manager.",cards:2.1,reds:1,form:"L-W-W-D-D",np:"Bielsa high-press. Valverde dominant. 1.2% title prob."},
+  "Saudi Arabia":{g:"H",p:42,elo:1660,fifaRank:57,wr:.40,gs:1.1,gc:1.3,ah:.35,qual:"42%",injuries:"Renard mgr. 2022 Argentina upset.",cards:1.8,reds:0,form:"W-D-W-L-D",np:"2022 Argentina miracle. Low block. Hard to replicate."},
+  "Cape Verde":{g:"H",p:22,elo:1605,fifaRank:70,wr:.35,gs:.9,gc:1.5,ah:.30,qual:"22%",injuries:"First WC. 500K pop.",cards:2.2,reds:1,form:"D-W-L-W-D",np:"Historic first WC. Massive underdog."},
+  "France":{g:"I",p:90.3,elo:2081,fifaRank:1,wr:.75,gs:2.2,gc:.7,ah:.68,qual:"90.3%",injuries:"Mbappe fit. Griezmann retired. Dembele injury prone.",cards:1.5,reds:0,form:"W-W-W-D-W",np:"Most expensive squad (1.47B). 4 straight semi-finals. Euro 2024 scoring crisis. Title 14%."},
+  "Senegal":{g:"I",p:65,elo:1832,fifaRank:14,wr:.70,gs:1.7,gc:.6,ah:.55,qual:"65%",injuries:"Mane 34. Koulibaly, Jackson fit.",cards:1.8,reds:0,form:"W-W-W-D-W",np:"Africa's most balanced system. AFCON. Group of Death."},
+  "Norway":{g:"I",p:55,elo:1725,fifaRank:44,wr:.50,gs:1.5,gc:1,ah:.42,qual:"55%",injuries:"Haaland fit. Odegaard fit.",cards:1.3,reds:0,form:"W-W-W-D-W",np:"Haaland+Odegaard. 8/8 qual. Haaland service deficit. 28yr absence."},
+  "Iraq":{g:"I",p:20,elo:1615,fifaRank:61,wr:.35,gs:.9,gc:1.4,ah:.30,qual:"20%",injuries:"40yr absence.",cards:2.1,reds:1,form:"L-W-D-L-D",np:"Fighting for points, not qualification."},
+  "Argentina":{g:"J",p:96,elo:2113,fifaRank:3,wr:.72,gs:1.9,gc:.6,ah:.65,qual:"96%",injuries:"Messi 38 (final WC). Di Maria retired. 10-player injury wave.",cards:1.6,reds:0,form:"W-W-D-W-L",np:"Defending champs. 4 straight titles. Favourable half. 64yr curse. Title 11.7%."},
+  "Austria":{g:"J",p:65,elo:1780,fifaRank:23,wr:.55,gs:1.4,gc:.8,ah:.48,qual:"65%",injuries:"Rangnick mgr. Alaba, Sabitzer fit.",cards:1.6,reds:0,form:"W-D-W-W-D",np:"Gegenpressing. Dark horse. Rhythm-disrupting."},
+  "Algeria":{g:"J",p:45,elo:1680,fifaRank:36,wr:.48,gs:1.2,gc:1,ah:.40,qual:"45%",injuries:"Mahrez key. 12yr absence.",cards:1.7,reds:0,form:"W-D-W-L-D",np:"Team in decline. Mahrez still key."},
+  "Jordan":{g:"J",p:31,elo:1610,fifaRank:68,wr:.38,gs:1,gc:1.3,ah:.32,qual:"31%",injuries:"WC debutants. Defensive solidity.",cards:2,reds:0,form:"D-W-D-L-W",np:"WC debutants. Highest qual prob of 4 new nations."},
+  "Portugal":{g:"K",p:97.7,elo:1967,fifaRank:5,wr:.75,gs:2,gc:.6,ah:.62,qual:"97.7%",injuries:"Ronaldo 41 (6th WC). Bruno, Bernardo, Leao fit.",cards:1.5,reds:0,form:"W-W-W-D-W",np:"2.61G/match qual. Best midfield triangle. Ronaldo non-press. Title 8.5%."},
+  "Colombia":{g:"K",p:78,elo:1970,fifaRank:13,wr:.60,gs:1.5,gc:.7,ah:.52,qual:"78%",injuries:"Luis Diaz (Bayern) fit. Copa America runners-up.",cards:1.9,reds:0,form:"W-D-W-W-D",np:"Copa runners-up. High-press disruptor. 27% upset vs Portugal."},
+  "Uzbekistan":{g:"K",p:42,elo:1635,fifaRank:62,wr:.42,gs:1.1,gc:1,ah:.35,qual:"42%",injuries:"WC debutants. AFC qualifying winners.",cards:1.8,reds:0,form:"W-D-W-D-W",np:"WC debutants. Higher qual prob (41%) than market expects."},
+  "DR Congo":{g:"K",p:22,elo:1620,fifaRank:51,wr:.38,gs:1,gc:1.3,ah:.32,qual:"22%",injuries:"52yr absence. Physical.",cards:2.2,reds:1,form:"D-W-L-W-L",np:"52yr absence. Physical but lacks tactical discipline."},
+  "England":{g:"L",p:91.9,elo:2020,fifaRank:4,wr:.72,gs:2,gc:.6,ah:.65,qual:"91.9%",injuries:"Kane, Bellingham, Saka, Rice fit. Rashford doubtful.",cards:1.3,reds:0,form:"W-W-D-W-W",np:"Tuchel. 8/8 qual, 0 GA. 65-70% possession. 60yr drought. Market 13% vs ELO 5.7%."},
+  "Croatia":{g:"L",p:80,elo:1895,fifaRank:11,wr:.62,gs:1.5,gc:.7,ah:.52,qual:"80%",injuries:"Modric 40 (final WC). Gvardiol, Brozovic fit.",cards:1.8,reds:1,form:"W-W-D-W-D",np:"2018 RU, 2022 3rd. Modric impact-sub role. Pedigree unmatched."},
+  "Ghana":{g:"L",p:44,elo:1690,fifaRank:65,wr:.45,gs:1.2,gc:1.1,ah:.38,qual:"44%",injuries:"Kudus (West Ham). Semenyo. Physical.",cards:1.9,reds:1,form:"W-D-W-L-D",np:"Physical. Leaky backline. Conservative attack."},
+  "Panama":{g:"L",p:26,elo:1650,fifaRank:53,wr:.38,gs:.9,gc:1.4,ah:.32,qual:"26%",injuries:"Second WC. Low block.",cards:2,reds:0,form:"L-D-W-L-D",np:"Second WC (2018). Carrasquilla anchor. Low block."}
+};
+
+// ===== UTILITY =====
+function gt(name){return TEAM_DATA[name]}
+function imp(odds){return 1/odds}
+function ev(w,odds){return w*odds-1}
+function clamp(v,m,M){return Math.max(m,Math.min(M,v))}
+
+// Kimi match prediction lookup — returns {home, draw, away} probabilities
+function getMatchPred(teamA,teamB){
+  const key1=teamA+' vs '+teamB,key2=teamB+' vs '+teamA;
+  const p=MATCH_PRED[key1]||MATCH_PRED[key2];
+  if(p)return p[0]/100;
+  return null;
+}
+
+// Cover probability using ALL Kimi data sources
+function estCover(teamA,teamB,line){
+  const n=parseFloat(line);
+  if(isNaN(n))return.5;
+  const a=gt(teamA),b=gt(teamB);
+  if(!a||!b)return.5;
+
+  // 1. Kimi match prediction baseline
+  const matchP=getMatchPred(teamA,teamB);
+
+  // 2. Elo-based win probability
+  const eloA=ELO[teamA]||1500,eloB=ELO[teamB]||1500;
+  const eloDiff=eloA-eloB;
+  const eloWinP=1/(1+Math.pow(10,-eloDiff/400));
+
+  // 3. Stats-based prediction
+  const gd=(a.gs||1.5)-(b.gc||1);
+  let base=a.ah||.5;
+
+  // Blend Kimi match pred with Elo and stats
+  let pWin;
+  if(matchP!==null){
+    pWin=matchP*.40+eloWinP*.30+base*.30;
+  } else {
+    pWin=eloWinP*.50+base*.50;
+  }
+
+  // Home advantage boost for hosts (Ch.6.6: 91% host knockout rate)
+  const haA=HOME_ADV[teamA],haB=HOME_ADV[teamB];
+  if(haA)pWin+=haA/1000;
+  if(haB)pWin-=haB/1000;
+
+  // Squad age penalty (>28.5 = slower recovery in 8-match format)
+  const ageA=SQUAD_AGE[teamA]||27,ageB=SQUAD_AGE[teamB]||27;
+  if(ageA>28.5)pWin-=.02;
+  if(ageB>28.5)pWin+=.02;
+
+  // Elite manager bonus (Ancelotti, Deschamps, Scaloni, Tuchel, Nagelsmann)
+  const mgrA=MANAGERS[teamA],mgrB=MANAGERS[teamB];
+  if(mgrA&&['Ancelotti','Deschamps','Scaloni','Tuchel','Nagelsmann'].includes(mgrA))pWin+=.015;
+  if(mgrB&&['Ancelotti','Deschamps','Scaloni','Tuchel','Nagelsmann'].includes(mgrB))pWin-=.015;
+
+  // Adjust for handicap line
+  let adjust=0;
+  if(n<=-1.5)adjust=gd>1.5?.15:gd>1?.05:-.1;
+  else if(n<=-0.75)adjust=gd>1?.12:gd>.5?.04:-.08;
+  else if(n<=-0.25)adjust=gd>.5?.08:gd>0?.02:-.05;
+  else if(n===0)adjust=gd>0?.05:gd>-0.5?0:-.05;
+  else if(n<=0.25)adjust=gd>-0.5?.05:gd>-1?-.02:-.08;
+  else if(n<=0.75)adjust=gd>-1?.08:gd>-1.5?0:-.1;
+  else adjust=gd>-1.5?.1:gd>-2?-.02:-.12;
+
+  // Blend for handicap-specific cover rate
+  let cover=pWin+adjust;
+  cover=clamp(cover,.1,.95);
+
+  // Check upset scenarios
+  const upsetKey1=teamA+' vs '+teamB,upsetKey2=teamB+' vs '+teamA;
+  const upsetP=UPSETS[upsetKey1]||UPSETS[upsetKey2];
+  if(upsetP&&n<0){
+    // If betting favorite and upset scenario exists, reduce confidence
+    const upsetFactor=upsetP/100;
+    cover=cover*(1-upsetFactor*.3)+.5*upsetFactor*.3;
+  }
+
+  return clamp(cover,.1,.95);
+}
+
+function awayCov(homeP){return 1-homeP}
+
+function formScore(team){
+  const d=gt(team);
+  if(!d)return.5;
+  const f=(d.form||'').replace(/-/g,'');
+  if(!f.length)return.5;
+  let pts=0;
+  for(const r of f){if(r==='W')pts+=3;else if(r==='D')pts+=1;}
+  return clamp(pts/(f.length*3),0,1);
+}
+
+function ctxScore(teamA,teamB){
+  const a=gt(teamA),b=gt(teamB);
+  if(!a||!b)return.5;
+  let s=.5;
+  // Elo difference
+  const eloA=ELO[teamA]||1500,eloB=ELO[teamB]||1500;
+  s+=clamp((eloA-eloB)/400,0,.2);
+  // Cards/discipline
+  if(a.reds>1)s-=.1;if(b.reds>1)s+=.05;
+  if(a.cards>2)s-=.05;if(b.cards>2)s+=.03;
+  // Form comparison
+  s+=clamp((formScore(teamA)-formScore(teamB))*.15,-.1,.1);
+  return clamp(s,0,1);
+}
+
+function oddsScore(imp,hist){return clamp((hist-imp)/.5,.2,1)}
+
+function confLabel(score,ev){
+  if(score>.65||ev>.08)return{label:'HIGH',cls:'conf-high'};
+  if(score>.45||ev>.02)return{label:'MEDIUM',cls:'conf-med'};
+  return{label:'LOW',cls:'conf-low'};
+}
+
+function fmtDate(){return new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+
+// ===== CORE ENGINE =====
+function analyze(){
+  const teamA=$('teamA').value,teamB=$('teamB').value;
+  if(!teamA||!teamB){alert('Select both teams.');return}
+  if(teamA===teamB){alert('Teams must be different.');return}
+  const a=gt(teamA),b=gt(teamB);
+  if(!a||!b){alert('Team data not found.');return}
+
+  const bets=[];
+  for(let i=1;i<=3;i++){
+    const h=$('h'+i).value.trim();
+    const oh=parseFloat($('o'+i+'h').value);
+    const oa=parseFloat($('o'+i+'a').value);
+    if(!h)continue;
+
+    if(!isNaN(oh)&&oh>1){
+      const c=estCover(teamA,teamB,h);
+      bets.push(scoreBet(teamA,teamB,{line:h,side:'home',team:teamA,odds:oh,cover:c,idx:i},a,b));
+    }
+    if(!isNaN(oa)&&oa>1){
+      const hn=parseFloat(h);
+      const al=hn>=0?'+'+hn:''+hn;
+      const ac=awayCov(estCover(teamA,teamB,(-hn).toString()));
+      bets.push(scoreBet(teamA,teamB,{line:al,side:'away',team:teamB,odds:oa,cover:ac,idx:i},a,b));
+    }
+  }
+  if(!bets.length){alert('Enter at least one handicap line with odds.');return}
+
+  const sorted=bets.sort((x,y)=>y.score-x.score);
+  renderResults(teamA,teamB,sorted,sorted[0]);
+  saveToHistory(teamA,teamB,sorted[0],sorted,sorted[0].reasoning);
+  hideTeamInfo();
+}
+
+function scoreBet(teamA,teamB,b,a,bd){
+  const ip=imp(b.odds);
+  const evV=ev(b.cover,b.odds);
+  const fS=b.side==='home'?formScore(teamA):formScore(teamB);
+  const cS=ctxScore(teamA,teamB);
+  const oS=oddsScore(ip,b.cover);
+  const total=evV*.30+fS*.20+cS*.20+oS*.15;
+
+  // Market divergence bonus
+  const pickT=b.side==='home'?teamA:teamB;
+  const div=DIVERGENCE[pickT]||0;
+  const divBonus=Math.max(0,div/20);
+
+  // Championship prob bonus for ANY team (Table 8.1 + 8.2)
+  const champAll=CHAMP_PROB_ALL[pickT]||0;
+  const champBonus=champAll/100*.05;
+
+  const finalScore=total+divBonus+champBonus;
+  const conf=confLabel(finalScore,evV);
+
+  const parts=[];
+  const pickD=gt(pickT);
+  const oppT=b.side==='home'?teamB:teamA;
+  const oppD=gt(oppT);
+  const matchP=getMatchPred(teamA,teamB);
+
+  parts.push(pickT+' (FIFA #'+pickD.fifaRank+', Elo '+ELO[pickT]+', Group '+pickD.g+') '+(b.side==='home'?'giving':'receiving')+' '+b.line+'. '+teamA+' win prob from Kimi report: '+(matchP!==null?(matchP*100).toFixed(0)+'% (head-to-head analysis)':'~'+(Math.round(ELO[pickT]/(ELO[pickT]+ELO[oppT])*100))+'% (Elo-based)')+'.');
+  if(pickD.form)parts.push('Form: '+pickD.form+'.');
+  if(pickD.injuries)parts.push('Injuries: '+pickD.injuries+'.');
+  if(pickD.np)parts.push('Kimi team analysis: '+pickD.np);
+  const ha=HOME_ADV[pickT];
+  if(ha)parts.push('Host advantage: '+pickT+' has '+(ha/100).toFixed(1)+'x qual boost.');
+  const age=SQUAD_AGE[pickT];
+  if(age&&age>28.5)parts.push('Age concern: '+age+'yr avg (above 25-28 golden window for 8-match format).');
+  const mgr=MANAGERS[pickT];
+  if(mgr)parts.push('Manager: '+mgr+'.');
+  if(div!==0)parts.push('Market divergence for '+pickT+': '+(div>0?'+':'-')+Math.abs(div)+'pp (model vs market).');
+  if(champAll>0)parts.push('Kimi title prob: '+champAll+'% (Table 8.1/8.2). Semi prob: '+(SEMI_PROB[pickT]||'n/a')+'%. QF prob: '+(QF_PROB[pickT]||'n/a')+'%.');
+  const travelDist=TRAVEL[pickT]||TRAVEL[oppT];
+  if(travelDist)parts.push('Travel burden: ~'+(travelDist/1000).toFixed(0)+'k km for '+pickT+'.');
+  const inj=INJURY_MATRIX[pickT];
+  if(inj&&inj.length)parts.push('Injury watch: '+inj.join('. ')+'.');
+  parts.push('Backtest: Kimi model 62.5% on 2018/60.4% on 2022 group stage.');
+  parts.push('Est. cover '+(b.cover*100).toFixed(0)+'% | EV '+(evV>=0?'+':'')+(evV*100).toFixed(1)+'%. '+conf.label+' conviction.');
+
+  b.ev=evV;b.score=finalScore;b.confidence=conf;
+  b.reasoning=parts.join(' ').replace(/\. (?!\d)/g,'.\n');
+  return b;
+}
+
+function $(id){return document.getElementById(id)}
+
+// ===== RENDER =====
+function renderResults(teamA,teamB,opts,best){
+  const el=$('results'),conf=best.confidence;
+  const sl=best.side==='home'?teamA:teamB;
+  const matchKey=teamA+' vs '+teamB;
+  const matchP=MATCH_PRED[matchKey]||MATCH_PRED[teamB+' vs '+teamA];
+  let matchHTML='';
+  if(matchP){
+    const tA=TRAVEL[teamA],tB=TRAVEL[teamB];
+    const injA=INJURY_MATRIX[teamA],injB=INJURY_MATRIX[teamB];
+    matchHTML='<div style="font-size:.75rem;color:var(--muted);margin-bottom:.75rem;padding:.5rem;background:var(--surface);border-radius:4px">';
+    matchHTML+='Kimi match prediction: '+teamA+' <strong>'+(matchP[0]>>0)+'%</strong> / Draw <strong>'+(matchP[1]>>0)+'%</strong> / '+teamB+' <strong>'+(matchP[2]>>0)+'%</strong>';
+    if(tA||tB)matchHTML+='<br>Travel: '+(teamA)+' ~'+(tA?(tA/1000).toFixed(0)+'K':'?')+' km · '+(teamB)+' ~'+(tB?(tB/1000).toFixed(0)+'K':'?')+' km';
+    if(injA||injB)matchHTML+='<br>Injury watch: '+(injA?injA.join(', '):'')+(injA&&injB?' | ':'')+(injB?injB.join(', '):'');
+    matchHTML+='</div>';
+  }
+
+  el.innerHTML=`
+    <div class="best-pick">
+      <div class="badge">Best Pick</div>
+      <div class="match">${teamA} vs ${teamB}</div>
+      <div class="pick"><strong>${sl} ${best.line}</strong> @ ${best.odds.toFixed(3)}</div>
+      <div class="meta">
+        <span class="${conf.cls}" title="Confidence: how strong the data supports this pick (HIGH=strong, MEDIUM=moderate, LOW=weak)"><span class="ti">ⓘ</span>${conf.label}</span>
+        <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value."><span class="ti">ⓘ</span>EV: ${best.ev>=0?'+':''}${(best.ev*100).toFixed(1)}%</span>
+        <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line"><span class="ti">ⓘ</span>Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
+        <span title="Composite Score: weighted blend of EV, team form, matchup context, and odds value (higher = stronger pick)"><span class="ti">ⓘ</span>Score: ${(best.score*100).toFixed(0)}%</span>
+      </div>
+    </div>
+    ${matchHTML}
+    <table class="options-table">
+      <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
+      ${opts.map((o,i)=>`
+        <tr${i===0?' class="best"':''}>
+          <td>${i+1}</td><td>${o.idx}</td><td>${o.side==='home'?'H':'A'}</td>
+          <td><strong>${o.side==='home'?teamA:teamB} ${o.line}</strong></td>
+          <td class="num">${o.odds.toFixed(3)}</td>
+          <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${o.ev>=0?'+':''}${(o.ev*100).toFixed(1)}%</td>
+          <td class="num">${(o.cover*100).toFixed(0)}%</td>
+          <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
+        </tr>`).join('')}
+    </table>
+    <div class="reasoning">${best.reasoning}</div>
+    <div style="margin-top:.75rem;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);padding:.5rem 0 0;line-height:1.5">
+      <strong style="color:var(--muted)">Data Sources — Kimi 2026 WC Report</strong> (277pg · 114 tables · 300 agents)
+      <span style="display:block;margin-top:.15rem">
+        Elo Table 1.4 · Match predictions · Market divergence ·
+        Injury Table 8.6 · Travel Ch.6.2 · Third-place Ch.4.13 ·
+        Backtest Tables 9.7-9.9 (62.5%/60.4%) · Monte Carlo ·
+        Squad age/depth · Home adv Ch.6.6 (91%) · Altitude Ch.6.5 ·
+        Heat risk Ch.6.4 · Manager data · Polymarket · Streaks ·
+        Title probs Tables 8.1-8.2 · Semi/QF Tables 8.4-8.5 ·
+        Set-piece Table 5.2 · Champion history Table 9.9
+      </span>
+    </div>
+  `;
+  el.classList.add('visible');
+}
+
+// ===== HISTORY =====
+function getHist(){try{return JSON.parse(localStorage.getItem('wcP')||'[]')}catch{return[]}}
+function setHist(h){localStorage.setItem('wcP',JSON.stringify(h))}
+
+function saveToHistory(teamA,teamB,best,allOpts,reasoning){
+  const h=getHist();
+  h.unshift({id:Date.now(),teamA,teamB,side:best.side,pick:best.line,odds:best.odds,confidence:best.confidence.label,ev:best.ev,cover:best.cover,reasoning:reasoning||'',opts:allOpts?allOpts.map(o=>({line:o.line,side:o.side,odds:o.odds,ev:o.ev,cover:o.cover,confidence:o.confidence.label})):[],result:'pending',date:fmtDate()});
+  if(h.length>50)h.length=50;
+  setHist(h);renderHist();
+}
+
+function renderHist(){
+  const h=getHist(),con=$('historyContainer'),act=$('historyActions');
+  if(!h.length){con.innerHTML='<div class="empty">No predictions yet.</div>';act.style.display='none';return}
+  act.style.display='flex';
+
+  // Win/loss tally
+  const won=h.filter(x=>x.result==='won').length;
+  const lost=h.filter(x=>x.result==='lost').length;
+  const pend=h.filter(x=>x.result==='pending').length;
+  const total=won+lost+pend;
+  const pct=won+lost>0?(won/(won+lost)*100).toFixed(0):'--';
+
+  // Stats bar
+  let stats='<div style="display:flex;gap:.6rem;flex-wrap:wrap;font-size:.75rem;padding:.4rem .6rem;background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted)">';
+  stats+='<span>Total: <strong style="color:var(--ink)">'+total+'</strong></span>';
+  stats+='<span>Won: <strong style="color:var(--success)">'+won+'</strong></span>';
+  stats+='<span>Lost: <strong style="color:var(--error)">'+lost+'</strong></span>';
+  stats+='<span>Pending: <strong>'+pend+'</strong></span>';
+  if(won+lost>0)stats+='<span>Win Rate: <strong>'+(pct)+'%</strong></span>';
+  stats+='</div>';
+
+  con.innerHTML=stats+h.map(i=>`
+    <div class="history-item" style="cursor:pointer" onclick="viewHistory(${i.id})" title="Click to view past analysis report">
+      <span class="h-match">${i.teamA} vs ${i.teamB}<span class="ti">ⓘ</span></span>
+      <span class="h-pick">${i.side==='away'?i.teamB+' ':''}${i.pick}</span>
+      <span class="h-odds">@ ${i.odds.toFixed(3)}</span>
+      <span class="h-result ${i.result}">${i.result==='pending'?'Pnd':i.result==='won'?'Won':'Lst'}</span>
+      <div class="h-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem" onclick="setRes(${i.id},'won')" title="Mark as won">✓</button>
+        <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem;color:var(--error)" onclick="setRes(${i.id},'lost')" title="Mark as lost">✗</button>
+        <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem;color:var(--muted)" onclick="delPred(${i.id})" title="Delete">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function viewHistory(id){
+  const h=getHist(),item=h.find(x=>x.id===id);
+  if(!item)return;
+  const el=$('results');
+  let optsHTML='';
+  if(item.opts&&item.opts.length){
+    optsHTML='<table class="options-table"><tr><th title="Ranking order"><span class="ti">ⓘ</span>#</th><th title="Side: H=Home, A=Away"><span class="ti">ⓘ</span>S</th><th title="The bet selection"><span class="ti">ⓘ</span>Bet</th><th class="num" title="Decimal odds"><span class="ti">ⓘ</span>Odds</th><th class="num" title="Expected Value — positive = value"><span class="ti">ⓘ</span>EV</th><th class="num" title="Cover probability — chance of covering the handicap"><span class="ti">ⓘ</span>Cov</th><th class="num" title="Confidence level"><span class="ti">ⓘ</span>Conf</th></tr>';
+    item.opts.forEach((o,i)=>{
+      optsHTML+='<tr'+(i===0?' class="best"':'')+'><td>'+(i+1)+'</td><td>'+o.side.charAt(0).toUpperCase()+'</td><td><strong>'+o.line+'</strong></td><td class="num">'+o.odds.toFixed(3)+'</td><td class="num" style="color:'+(o.ev>=0?'var(--success)':'var(--error)')+'">'+(o.ev>=0?'+':'')+(o.ev*100).toFixed(1)+'%</td><td class="num">'+(o.cover*100).toFixed(0)+'%</td><td class="num">'+o.confidence+'</td></tr>';
+    });
+    optsHTML+='</table>';
+  }
+  const sideLabel=item.side==='home'?item.teamA:item.teamB;
+  const confCls=item.confidence==='HIGH'?'conf-high':item.confidence==='MEDIUM'?'conf-med':'conf-low';
+  el.innerHTML=`
+    <div class="best-pick">
+      <div class="badge">History View</div>
+      <div class="match">${item.teamA} vs ${item.teamB}</div>
+      <div class="pick"><strong>${sideLabel} ${item.pick}</strong> @ ${item.odds.toFixed(3)}</div>
+      <div class="meta">
+        <span class="${confCls}">${item.confidence}</span>
+        <span>EV: ${item.ev>=0?'+':''}${(item.ev*100).toFixed(1)}%</span>
+        <span>Est. Cover: ${item.cover?((item.cover*100).toFixed(0)+'%'):'--'}</span>
+        <span>Result: ${item.result==='pending'?'Pending':item.result==='won'?'Won':'Lost'}</span>
+      </div>
+    </div>
+    ${optsHTML}
+    ${item.reasoning?'<div class="reasoning">'+item.reasoning+'</div>':''}
+    <div style="margin-top:.5rem;text-align:right;font-size:.75rem;color:var(--muted)">${item.date||''}</div>
+  `;
+  el.classList.add('visible');
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function setRes(id,r){const h=getHist(),i=h.find(x=>x.id===id);if(i){i.result=r;setHist(h);renderHist()}}
+function delPred(id){setHist(getHist().filter(x=>x.id!==id));renderHist()}
+function clearHistory(){if(confirm('Clear all?')){setHist([]);renderHist()}}
+
+function exportPredictions(){
+  const h=getHist();
+  if(!h.length){alert('No predictions to export.');return}
+  const blob=new Blob([JSON.stringify(h,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='wc-predictions-export.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importPredictions(input){
+  if(!input.files||!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)||!data.length)throw new Error('Empty or invalid');
+      // Validate structure
+      const valid=data.every(x=>x.teamA&&x.teamB&&x.pick!==undefined);
+      if(!valid)throw new Error('Invalid prediction format');
+      const existing=getHist();
+      const merged=[...existing,...data];
+      // Deduplicate by id
+      const seen=new Set();
+      const deduped=merged.filter(x=>{const k=x.id;if(seen.has(k))return false;seen.add(k);return true});
+      if(deduped.length>50)deduped.length=50;
+      setHist(deduped);
+      renderHist();
+      alert('Imported '+data.length+' prediction'+(data.length>1?'s':'')+'.');
+    }catch(err){
+      alert('Invalid file. Please upload a valid JSON export file.');
+    }
+  };
+  reader.readAsText(input.files[0]);
+  input.value='';
+}
+
+// ===== FORM =====
+function loadSample(){
+  $('teamA').value='Spain';$('teamB').value='Uruguay';
+  for(let i=1;i<=3;i++){$('h'+i).value='';$('o'+i+'h').value='';$('o'+i+'a').value=''}
+  $('h1').value='-1';$('o1h').value='1.90';$('o1a').value='2.00';
+  $('h2').value='-0.75';$('o2h').value='1.85';$('o2a').value='2.10';
+  $('h3').value='-0.5';$('o3h').value='1.75';$('o3a').value='2.25';
+  showTeamInfo('teamA','teamInfoA');showTeamInfo('teamB','teamInfoB');
+  $('results').classList.remove('visible');
+}
+
+function clearForm(){
+  $('teamA').value='';$('teamB').value='';
+  for(let i=1;i<=3;i++){$('h'+i).value='';$('o'+i+'h').value='';$('o'+i+'a').value=''}
+  $('results').classList.remove('visible');hideTeamInfo();
+}
+
+function hideTeamInfo(){$('teamInfoA').classList.remove('visible');$('teamInfoB').classList.remove('visible')}
+
+function showTeamInfo(selId,infoId){
+  const name=$(selId).value,el=$(infoId);
+  if(!name||!TEAM_DATA[name]){el.classList.remove('visible');return}
+  const d=TEAM_DATA[name];
+  const elo=ELO[name]||'N/A';
+  const qual=GROUP_QUAL[d.g]?.[name]||[0,0,0,0];
+  const champAll=CHAMP_PROB_ALL[name];
+  const semiP=SEMI_PROB[name];
+  const qfP=QF_PROB[name];
+  const mkt=MARKET_TITLE_RANGE[name]||'';
+  const travel=TRAVEL[name]||'?';
+  const eloDiff=ELO_DIFF[name];
+  const injPlayers=INJURY_MATRIX[name];
+  const age=SQUAD_AGE[name];
+  const mgr=MANAGERS[name];
+  const poly=POLYMARKET[name];
+  const streak=STREAKS[name];
+  const homeAdv=HOME_ADV[name];
+  el.innerHTML=`
+    <div class="ti-row"><span class="ti-label">Group / FIFA / Elo</span><span class="ti-value">${d.g} · #${d.fifaRank} · ${elo}</span></div>
+    ${eloDiff!==undefined?`<div class="ti-row"><span class="ti-label">Elo-FIFA Diff</span><span class="ti-value">${eloDiff>=0?'+':''}${eloDiff}</span></div>`:''}
+    <div class="ti-row"><span class="ti-label">Win · G/game</span><span class="ti-value">${(d.wr*100).toFixed(0)}% · ${d.gs}G sc / ${d.gc}G conc</span></div>
+    <div class="ti-row"><span class="ti-label">AH Cover · Qual</span><span class="ti-value">${(d.ah*100).toFixed(0)}% · ${d.p}%</span></div>
+    <div class="ti-row"><span class="ti-label">Group Finishes</span><span class="ti-value">1st:${qual[0]}% 2nd:${qual[1]}% 3rd:${qual[2]}% Elim:${qual[3]}%</span></div>
+    ${champAll!==undefined?`<div class="ti-row"><span class="ti-label">Title Prob (Table 8.1)</span><span class="ti-value">${champAll}%</span></div>`:''}
+    ${semiP!==undefined?`<div class="ti-row"><span class="ti-label">Semi-Final Prob</span><span class="ti-value">${semiP}%</span></div>`:''}
+    ${qfP!==undefined?`<div class="ti-row"><span class="ti-label">Quarter-Final Prob</span><span class="ti-value">${qfP}%</span></div>`:''}
+    ${mkt?`<div class="ti-row"><span class="ti-label">Market Title Range</span><span class="ti-value">${mkt}</span></div>`:''}
+    <div class="ti-row"><span class="ti-label">Travel · Squad Age</span><span class="ti-value">~${travel.toLocaleString()} km · ${age?age+'yr':''}</span></div>
+    ${mgr?`<div class="ti-row"><span class="ti-label">Manager</span><span class="ti-value">${mgr}</span></div>`:''}
+    ${poly?`<div class="ti-row"><span class="ti-label">Polymarket</span><span class="ti-value">${poly}% title</span></div>`:''}
+    ${streak?`<div class="ti-row"><span class="ti-label">Streak</span><span class="ti-value">${streak}</span></div>`:''}
+    ${homeAdv?`<div class="ti-row"><span class="ti-label">Host Boost</span><span class="ti-value">${HOST_KO_RATE}% host KO rate</span></div>`:''}
+    <div class="ti-row"><span class="ti-label">Form · Cards</span><span class="ti-value">${d.form} · ${d.cards}YC ${d.reds}RC</span></div>
+    <div class="ti-row"><span class="ti-label">Injuries</span><span class="ti-value">${d.injuries}</span></div>
+    ${injPlayers?`<div class="ti-row"><span class="ti-label">Key Injury Risks</span><span class="ti-value">${injPlayers.join('; ')}</span></div>`:''}
+    <div class="ti-row"><span class="ti-label">Kimi Analysis</span><span class="ti-value" style="font-size:.75rem">${d.np||''}</span></div>
+  `;
+  el.classList.add('visible');
+  // Update labels
+  const tA=$('teamA').value||'Team A',tB=$('teamB').value||'Team B';
+  $('homeLabel').innerHTML=tA+' (Home) <span>odds</span>';
+  $('awayLabel').innerHTML=tB+' (Away) <span>odds</span>';
+}
+
+// ===== INIT =====
+function init(){
+  const gs=Object.keys(GROUPS);
+  const fill=sel=>{
+    const el=$(sel);
+    let h='<option value="">Select Team</option>';
+    gs.forEach(g=>{
+      h+='<optgroup label="Group '+g+'">';
+      GROUPS[g].forEach(t=>{h+='<option value="'+t+'">'+t+'</option>'});
+      h+='</optgroup>';
+    });
+    el.innerHTML=h;
+    el.addEventListener('change',function(){
+      if(this.id==='teamA')showTeamInfo('teamA','teamInfoA');
+      else showTeamInfo('teamB','teamInfoB');
+    });
+  };
+  fill('teamA');fill('teamB');
+  renderHist();
+  document.querySelectorAll('input').forEach(el=>{
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')analyze()});
+  });
+}
+init();
+</script>
+</body>
+</html>
