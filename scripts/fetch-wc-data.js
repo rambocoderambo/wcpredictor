@@ -1,6 +1,7 @@
 import {readFileSync,writeFileSync} from 'fs';
 import {getAllMatches,toOurName} from './sources/fifa-api.js';
 import * as footballData from './sources/football-data.js';
+import {getAvailableMatches as lsGetMatches,getMatchStats,extractLiveStats,toOurName as lsToOurName} from './sources/livescore.js';
 import {TEAM_NAMES} from './team-mapping.js';
 
 const PATH=process.argv[2]||'index.html';
@@ -13,7 +14,10 @@ function emptyData(){return{
   wcCards:0,wcReds:0,wcPossession:0,wcShots:0,
   wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,
   wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,
-  wcRestDays:0,wcH2h:null,wcFormation:0
+  wcRestDays:0,wcH2h:null,wcFormation:0,
+  wcShotsOnTarget:0,wcShotsOffTarget:0,wcBlockedShots:0,
+  wcCorners:0,wcYellowCards:0,wcRedCards:0,
+  wcShotsConcededTarget:0,wcShotsConcededOffTarget:0
 }}
 
 function emptyDataObj(){const o={};for(const t of TEAM_NAMES)o[t]=emptyData();return o}
@@ -33,7 +37,7 @@ function buildLiveDataJs(liveData){
   const teams=Object.keys(liveData).sort();
   const lines=teams.map(t=>{
     const d=liveData[t];
-    return `  "${t}":{wcForm:"${d.wcForm||''}",wcGs:${d.wcGs??0},wcGc:${d.wcGc??0},wcWr:${d.wcWr??0},wcAh:${d.wcAh??0},wcMatches:${d.wcMatches??0},wcCards:${d.wcCards??0},wcReds:${d.wcReds??0},wcPossession:${d.wcPossession??0},wcShots:${d.wcShots??0},wcShotsConceded:${d.wcShotsConceded??0},wcGkSaves:${d.wcGkSaves??0},wcFouls:${d.wcFouls??0},wcOffsides:${d.wcOffsides??0},wcPensAwarded:${d.wcPensAwarded??0},wcLateGoals:${d.wcLateGoals??0},wcCleanSheets:${d.wcCleanSheets??0},wcRestDays:${d.wcRestDays??0},wcH2h:${JSON.stringify(d.wcH2h)||'null'},wcFormation:${d.wcFormation??0}}`;
+    return `  "${t}":{wcForm:"${d.wcForm||''}",wcGs:${d.wcGs??0},wcGc:${d.wcGc??0},wcWr:${d.wcWr??0},wcAh:${d.wcAh??0},wcMatches:${d.wcMatches??0},wcCards:${d.wcCards??0},wcReds:${d.wcReds??0},wcPossession:${d.wcPossession??0},wcShots:${d.wcShots??0},wcShotsConceded:${d.wcShotsConceded??0},wcGkSaves:${d.wcGkSaves??0},wcFouls:${d.wcFouls??0},wcOffsides:${d.wcOffsides??0},wcPensAwarded:${d.wcPensAwarded??0},wcLateGoals:${d.wcLateGoals??0},wcCleanSheets:${d.wcCleanSheets??0},wcRestDays:${d.wcRestDays??0},wcH2h:${JSON.stringify(d.wcH2h)||'null'},wcFormation:${d.wcFormation??0},wcShotsOnTarget:${d.wcShotsOnTarget??0},wcShotsOffTarget:${d.wcShotsOffTarget??0},wcBlockedShots:${d.wcBlockedShots??0},wcCorners:${d.wcCorners??0},wcYellowCards:${d.wcYellowCards??0},wcRedCards:${d.wcRedCards??0},wcShotsConcededTarget:${d.wcShotsConcededTarget??0},wcShotsConcededOffTarget:${d.wcShotsConcededOffTarget??0}}`;
   });
   return 'const LIVE_DATA = {\n'+lines.join(',\n')+'\n};';
 }
@@ -129,6 +133,62 @@ async function main(){
         d.wcFormation=curForm+1;  // count matches with formation data
       }
     }
+  }
+
+  // Scrape detailed stats from LiveScore for finished matches
+  console.log('Checking LiveScore for match stats...');
+  try{
+    const lsMatches=await lsGetMatches();
+    const lsProcessed={};
+    const lsMatch=html.match(/const LS_PROCESSED = (\{[\s\S]*?\});/);
+    if(lsMatch)try{Object.assign(lsProcessed,JSON.parse(lsMatch[1].replace(/(\w+):/g,'"$1":').replace(/;$/,'')))}catch{}
+
+    let lsNew=0;
+    for(const lm of lsMatches){
+      if(lm.status!=='PAST'||lsProcessed[lm.eventId])continue;
+      const home=lsToOurName(lm.homeName)||lm.homeName;
+      const away=lsToOurName(lm.awayName)||lm.awayName;
+      if(!TEAM_NAMES.includes(home)||!TEAM_NAMES.includes(away))continue;
+
+      const stats=await getMatchStats(lm.eventId,lm.homeName,lm.awayName);
+      if(!stats)continue;
+
+      lsNew++;
+      lsProcessed[lm.eventId]=true;
+
+      for(const team of[home,away]){
+        if(!liveData[team])continue;
+        const d=liveData[team];
+        const isHome=team===home;
+        // Add stats per match (with guards)
+        if(stats.shotsOnTarget)d.wcShotsOnTarget+=isHome?stats.shotsOnTarget.home:stats.shotsOnTarget.away;
+        if(stats.shotsOffTarget)d.wcShotsOffTarget+=isHome?stats.shotsOffTarget.home:stats.shotsOffTarget.away;
+        if(stats.blockedShots)d.wcBlockedShots+=isHome?stats.blockedShots.home:stats.blockedShots.away;
+        if(stats.cornerKicks)d.wcCorners+=isHome?stats.cornerKicks.home:stats.cornerKicks.away;
+        if(stats.fouls)d.wcFouls+=isHome?stats.fouls.home:stats.fouls.away;
+        if(stats.offsides)d.wcOffsides+=isHome?stats.offsides.home:stats.offsides.away;
+        if(stats.yellowCards)d.wcYellowCards+=isHome?stats.yellowCards.home:stats.yellowCards.away;
+        if(stats.redCards)d.wcRedCards+=isHome?stats.redCards.home:stats.redCards.away;
+        if(stats.goalkeeperSaves)d.wcGkSaves+=isHome?stats.goalkeeperSaves.home:stats.goalkeeperSaves.away;
+        // Shots conceded = opponent's shots
+        if(stats.shotsOnTarget)d.wcShotsConcededTarget+=isHome?stats.shotsOnTarget.away:stats.shotsOnTarget.home;
+        if(stats.shotsOffTarget)d.wcShotsConcededOffTarget+=isHome?stats.shotsOffTarget.away:stats.shotsOffTarget.home;
+        // Possession from LiveScore
+        if(stats.possession){
+          const pct=isHome?stats.possession.home:stats.possession.away;
+          if(pct>0&&!isNaN(pct)){
+            d.wcPossession=d.wcMatches>0?((d.wcPossession*(d.wcMatches-1)+pct)/d.wcMatches):pct;
+          }
+        }
+      }
+    }
+    const lsStr=JSON.stringify(lsProcessed);
+    html=html.replace(/const LS_PROCESSED = \{[\s\S]*?\};/,'const LS_PROCESSED = '+lsStr+';')||
+      (html=html.replace('const WC_PROCESSED','const LS_PROCESSED = {};\nconst WC_PROCESSED'));
+    if(lsNew>0)console.log('LiveScore: '+lsNew+' matches with detailed stats');
+    else console.log('LiveScore: no new matches');
+  }catch(e){
+    console.warn('LiveScore scrape failed:',e.message);
   }
 
   // Write updated LIVE_DATA
