@@ -141,7 +141,6 @@ input[type=number]{-moz-appearance:textfield}
       </div>
 
       <div class="btn-group">
-        <button class="btn btn-ghost" onclick="loadSample()">Sample</button>
         <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
         <button class="btn btn-primary" onclick="analyze()">Analyze</button>
       </div>
@@ -299,182 +298,7 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
 const VERSION = "1.05";
-const INJURIES_LIVE = {
- "Brazil": [
-  {
-   "player": "Brazil",
-   "injury": "Torn hamstring",
-   "status": "OUT"
-  }
- ],
- "Germany": [
-  {
-   "player": "Germany",
-   "injury": "Torn adductor",
-   "status": "OUT"
-  },
-  {
-   "player": "Germany",
-   "injury": "Torn thigh muscle",
-   "status": "OUT"
-  }
- ],
- "Netherlands": [
-  {
-   "player": "Netherlands",
-   "injury": "Groin strain",
-   "status": "OUT"
-  },
-  {
-   "player": "Netherlands",
-   "injury": "Torn ACL",
-   "status": "OUT"
-  },
-  {
-   "player": "Matthijs de Ligt",
-   "injury": "Back",
-   "status": "OUT"
-  }
- ],
- "Japan": [
-  {
-   "player": "Kaoru Mitoma",
-   "injury": "Torn hamstring",
-   "status": "OUT"
-  },
-  {
-   "player": "Japan",
-   "injury": "Torn ACL",
-   "status": "OUT"
-  }
- ],
- "France": [
-  {
-   "player": "France",
-   "injury": "Torn Achilles tendon",
-   "status": "OUT"
-  },
-  {
-   "player": "France",
-   "injury": "Back",
-   "status": "LIKELY"
-  }
- ],
- "United States": [
-  {
-   "player": "United States",
-   "injury": "Torn Achilles tendon",
-   "status": "OUT"
-  },
-  {
-   "player": "United States",
-   "injury": "Ankle sprain",
-   "status": "OUT"
-  },
-  {
-   "player": "United States",
-   "injury": "Torn ankle ligaments",
-   "status": "LIKELY"
-  }
- ],
- "Australia": [
-  {
-   "player": "Australia",
-   "injury": "Torn Achilles tendon",
-   "status": "OUT"
-  }
- ],
- "Spain": [
-  {
-   "player": "Spain",
-   "injury": "Metatarsal fracture",
-   "status": "OUT"
-  },
-  {
-   "player": "Spain",
-   "injury": "Partially torn hamstring",
-   "status": "LIKELY"
-  }
- ],
- "Canada": [
-  {
-   "player": "Marcelo Flores",
-   "injury": "ACL",
-   "status": "OUT"
-  },
-  {
-   "player": "Alphonso Davies",
-   "injury": "Hamstring",
-   "status": "LIKELY"
-  }
- ],
- "Scotland": [
-  {
-   "player": "Billy Gilmour",
-   "injury": "Knee",
-   "status": "OUT"
-  }
- ],
- "Argentina": [
-  {
-   "player": "Argentina",
-   "injury": "Partially torn MCL",
-   "status": "DOUBT"
-  },
-  {
-   "player": "Argentina",
-   "injury": "Thigh injury",
-   "status": "DOUBT"
-  },
-  {
-   "player": "Argentina",
-   "injury": "Thigh injury",
-   "status": "LIKELY"
-  }
- ],
- "England": [
-  {
-   "player": "England",
-   "injury": "Thigh",
-   "status": "DOUBT"
-  }
- ],
- "Ghana": [
-  {
-   "player": "Ghana",
-   "injury": "Hamstring",
-   "status": "DOUBT"
-  }
- ],
- "Uruguay": [
-  {
-   "player": "Uruguay",
-   "injury": "Ankle sprain",
-   "status": "DOUBT"
-  }
- ],
- "Morocco": [
-  {
-   "player": "Morocco",
-   "injury": "Pulled hamstring",
-   "status": "LIKELY"
-  }
- ],
- "Algeria": [
-  {
-   "player": "Algeria",
-   "injury": "Fractured jaw and chin",
-   "status": "LIKELY"
-  }
- ],
- "Croatia": [
-  {
-   "player": "Croatia",
-   "injury": "Fractured cheekbone",
-   "status": "LIKELY"
-  }
- ]
-};
+const INJURIES_LIVE = {};
 const STANDINGS = {
  "Mexico": {
   "rank": 1,
@@ -523,9 +347,12 @@ const STANDINGS = {
 };
 const VERSION_HISTORY = [
   {v:"1.02",date:"Jun 12",msg:"LiveScore scraping: shots, cards, fouls, corners, GK saves — all match stats live"},
-  {v:"1.01",date:"Jun 12",msg:"Rambo Action launch: FIFA API auto-sync, Football-data.org fallback, dedup"}
-],{v:"1.03",date:"Jun 12",msg:"Live match data: 4 team-matches processed"}
-const LAST_SYNC = "Jun 12, 05:54 PM";
+  {v:"1.01",date:"Jun 12",msg:"Rambo Action launch: FIFA API auto-sync, Football-data.org fallback, dedup"},
+  {v:"1.03",date:"Jun 12",msg:"Live match data: 4 team-matches processed"},
+  {v:"1.04",date:"Jun 12",msg:"Goal timestamps, late goals, H2H history, group standings"},
+  {v:"1.05",date:"Jun 12",msg:"Non-linear scoring: matchup, motivation, fatigue + ESPN injuries"}
+];
+const LAST_SYNC = "—";
 const LS_PROCESSED = {"1417909":true,"1417910":true};
 const WC_PROCESSED = {"400021441":true,"400021443":true};
 
@@ -1231,16 +1058,6 @@ function importPredictions(input){
 }
 
 // ===== FORM =====
-function loadSample(){
-  $('teamA').value='Spain';$('teamB').value='Uruguay';
-  for(let i=1;i<=3;i++){$('h'+i).value='';$('o'+i+'h').value='';$('o'+i+'a').value=''}
-  $('h1').value='-1';$('o1h').value='1.90';$('o1a').value='2.00';
-  $('h2').value='-0.75';$('o2h').value='1.85';$('o2a').value='2.10';
-  $('h3').value='-0.5';$('o3h').value='1.75';$('o3a').value='2.25';
-  showTeamInfo('teamA','teamInfoA');showTeamInfo('teamB','teamInfoB');
-  $('results').classList.remove('visible');
-}
-
 function clearForm(){
   $('teamA').value='';$('teamB').value='';
   for(let i=1;i<=3;i++){$('h'+i).value='';$('o'+i+'h').value='';$('o'+i+'a').value=''}

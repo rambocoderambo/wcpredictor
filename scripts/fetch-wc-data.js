@@ -261,9 +261,9 @@ async function main(){
     // Add version history entry
     const today=new Date().toLocaleString('en-US',{month:'short',day:'numeric',timeZone:'Asia/Singapore'});
     const statsMsg='Live match data: '+(finished.length*2)+' team-matches processed';
-    const histRe=/(const VERSION_HISTORY = \[[\s\S]*?\]);/;
+    const histRe=/(const VERSION_HISTORY = \[[\s\S]*?)\];/;
     if(histRe.test(html)){
-      html=html.replace(histRe,'$1,{v:"'+next+'",date:"'+today+'",msg:"'+statsMsg+'"}');
+      html=html.replace(histRe,'$1,{v:"'+next+'",date:"'+today+'",msg:"'+statsMsg+'"}];');
     }
     verStr=next;
   }
