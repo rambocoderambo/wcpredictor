@@ -678,14 +678,10 @@ function fatigueScore(team){
   const d=gt(team);
   if(!d||d.wcMatches<2)return.5;
   let s=.5;
-  // More matches in short span = fatigue
   if(d.wcMatches>=3)s-=.02;
   if(d.wcMatches>=5)s-=.03;
-  // Already qualified teams might rest players (top of group)
   const st=STANDINGS[team];
   if(st&&st.played>=3&&st.rank===1)s-=.02;
-  return clamp(s,0,1);
-}
   return clamp(s,0,1);
 }
 
