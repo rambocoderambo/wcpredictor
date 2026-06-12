@@ -306,7 +306,229 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
 const VERSION = "1.05";
-const INJURIES_LIVE = {};
+const INJURIES_LIVE = {
+ "Brazil": [
+  {
+   "player": "Estêvão",
+   "injury": "Torn hamstring",
+   "status": "OUT"
+  },
+  {
+   "player": "Rodrygo",
+   "injury": "Torn ACL and meniscus",
+   "status": "OUT"
+  },
+  {
+   "player": "Éder Militão",
+   "injury": "Torn hamstring",
+   "status": "OUT"
+  },
+  {
+   "player": "Neymar",
+   "injury": "Calf",
+   "status": "DOUBT"
+  }
+ ],
+ "Germany": [
+  {
+   "player": "Serge Gnabry",
+   "injury": "Torn adductor",
+   "status": "OUT"
+  },
+  {
+   "player": "Lennart Karl",
+   "injury": "Torn thigh muscle",
+   "status": "OUT"
+  },
+  {
+   "player": "Marc-André ter Stegen",
+   "injury": "Torn thigh muscle",
+   "status": "OUT"
+  }
+ ],
+ "Netherlands": [
+  {
+   "player": "Jurriën Timber",
+   "injury": "Groin strain",
+   "status": "OUT"
+  },
+  {
+   "player": "Xavi Simons",
+   "injury": "Torn ACL",
+   "status": "OUT"
+  },
+  {
+   "player": "Jerdy Schouten",
+   "injury": "Torn ACL",
+   "status": "OUT"
+  },
+  {
+   "player": "Matthijs de Ligt",
+   "injury": "Back",
+   "status": "OUT"
+  }
+ ],
+ "Japan": [
+  {
+   "player": "Kaoru Mitoma",
+   "injury": "Torn hamstring",
+   "status": "OUT"
+  },
+  {
+   "player": "Takumi Minamino",
+   "injury": "Torn ACL",
+   "status": "OUT"
+  }
+ ],
+ "France": [
+  {
+   "player": "Hugo Ekitiké",
+   "injury": "Torn Achilles tendon",
+   "status": "OUT"
+  },
+  {
+   "player": "William Saliba",
+   "injury": "Back",
+   "status": "LIKELY"
+  }
+ ],
+ "United States": [
+  {
+   "player": "Patrick Agyemang",
+   "injury": "Torn Achilles tendon",
+   "status": "OUT"
+  },
+  {
+   "player": "Johnny Cardoso",
+   "injury": "Ankle sprain",
+   "status": "OUT"
+  },
+  {
+   "player": "hris Richards",
+   "injury": "Torn ankle ligaments",
+   "status": "LIKELY"
+  }
+ ],
+ "Australia": [
+  {
+   "player": "Lewis Miller",
+   "injury": "Torn Achilles tendon",
+   "status": "OUT"
+  },
+  {
+   "player": "Aiden O'Neill",
+   "injury": "Ankle",
+   "status": "DOUBT"
+  }
+ ],
+ "Spain": [
+  {
+   "player": "Fermín López",
+   "injury": "Metatarsal fracture",
+   "status": "OUT"
+  },
+  {
+   "player": "Mikel Merino",
+   "injury": "Fractured foot",
+   "status": "DOUBT"
+  },
+  {
+   "player": "Lamine Yamal",
+   "injury": "Partially torn hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Canada": [
+  {
+   "player": "Marcelo Flores",
+   "injury": "ACL",
+   "status": "OUT"
+  },
+  {
+   "player": "Alphonso Davies",
+   "injury": "Hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Scotland": [
+  {
+   "player": "Billy Gilmour",
+   "injury": "Knee",
+   "status": "OUT"
+  }
+ ],
+ "Argentina": [
+  {
+   "player": "Cristian Romero",
+   "injury": "Partially torn MCL",
+   "status": "DOUBT"
+  },
+  {
+   "player": "Nahuel Molina",
+   "injury": "Thigh injury",
+   "status": "DOUBT"
+  },
+  {
+   "player": "Lionel Messi",
+   "injury": "Thigh injury",
+   "status": "LIKELY"
+  }
+ ],
+ "England": [
+  {
+   "player": "Tino Livramento",
+   "injury": "Thigh",
+   "status": "DOUBT"
+  },
+  {
+   "player": "Reece James",
+   "injury": "Pulled hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Ghana": [
+  {
+   "player": "Mohammed Kudus",
+   "injury": "Hamstring",
+   "status": "DOUBT"
+  }
+ ],
+ "Uruguay": [
+  {
+   "player": "Jose Giménez",
+   "injury": "Ankle sprain",
+   "status": "DOUBT"
+  }
+ ],
+ "Türkiye": [
+  {
+   "player": "Arda Güler",
+   "injury": "Pulled hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Morocco": [
+  {
+   "player": "Achraf Hakimi",
+   "injury": "Pulled hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Algeria": [
+  {
+   "player": "Luca Zidane",
+   "injury": "Fractured jaw and chin",
+   "status": "LIKELY"
+  }
+ ],
+ "Croatia": [
+  {
+   "player": "Luka Modric",
+   "injury": "Fractured cheekbone",
+   "status": "LIKELY"
+  }
+ ]
+};
 const STANDINGS = {
  "Mexico": {
   "rank": 1,
@@ -360,7 +582,7 @@ const VERSION_HISTORY = [
   {v:"1.04",date:"Jun 12",msg:"Goal timestamps, late goals, H2H history, group standings"},
   {v:"1.05",date:"Jun 12",msg:"Non-linear scoring: matchup, motivation, fatigue + ESPN injuries"}
 ];
-const LAST_SYNC = "—";
+const LAST_SYNC = "Jun 12, 07:00 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true};
 const WC_PROCESSED = {"400021441":true,"400021443":true};
 
@@ -1068,12 +1290,14 @@ function showTeamInfo(selId,infoId){
 
   const wrPct=(d.wr*100).toFixed(0);
   const ahPct=(d.ah*100).toFixed(0);
-  const gsPerG=(d.wcMatches>0?(d.wcGs/d.wcMatches):d.gs);
-  const gcPerG=(d.wcMatches>0?(d.wcGc/d.wcMatches):d.gc);
-  const shotEff=d.wcMatches>0&&d.wcShotsOnTarget+d.wcShotsOffTarget>0?((d.wcShotsOnTarget+d.wcShotsOffTarget)/d.wcMatches):0;
-  const ycPerG=d.wcMatches>0?(d.wcYellowCards/d.wcMatches):d.cards;
-  const cleanPct=d.wcMatches>0?(d.wcCleanSheets/d.wcMatches*100):(d.ah*100);
-  const poss=d.wcMatches>0?d.wcPossession:50;
+  const wcM=d.wcMatches||0;
+  const gsPerG=wcM>0?d.gs/wcM:d.gs;
+  const gcPerG=wcM>0?d.gc/wcM:d.gc;
+  const totalShots=d.shotsOnTarget+d.shotsOffTarget;
+  const shotEff=wcM>0&&totalShots>0?totalShots/wcM:0;
+  const ycPerG=wcM>0?d.yellowCards/wcM:d.cards;
+  const cleanPct=wcM>0?d.cleanSheets/wcM*100:d.ah*100;
+  const poss=typeof d.possession==='number'&&!isNaN(d.possession)?d.possession:50;
 
   el.innerHTML=`
     <div class="ti-row"><span class="ti-label">Group · FIFA · Elo</span><span class="ti-value">${d.g} · #${d.fifaRank} · ${elo}</span></div>
@@ -1084,8 +1308,8 @@ function showTeamInfo(selId,infoId){
     ${statBar('Goals/G',gsPerG*33,gsPerG>2?'good':gsPerG>1?'mid':'bad',gsPerG.toFixed(2))}
     ${statBar('Possession',poss,poss>55?'good':poss>45?'mid':'bad',poss.toFixed(0)+'%')}
     ${statBar('Clean Sheet',cleanPct,cleanPct>50?'good':cleanPct>30?'mid':'bad',cleanPct.toFixed(0)+'%')}
-    ${statBar('Shots/G',shotEff*10,shotEff>12?'good':shotEff>8?'mid':'bad',shotEff.toFixed(1))}
-    ${statBar('Discipline',100-ycPerG*20,ycPerG<1.5?'good':ycPerG<2.5?'mid':'bad',(ycPerG).toFixed(1)+'YC')}
+    ${statBar('Shots/G',shotEff*10,shotEff>12?'good':shotEff>8?'mid':'bad',(shotEff||0).toFixed(1))}
+    ${statBar('Discipline',100-(ycPerG||0)*20,ycPerG<1.5?'good':ycPerG<2.5?'mid':'bad',(ycPerG||0).toFixed(1)+'YC')}
     <div class="ti-row" style="margin-top:.35rem"><span class="ti-label">Form · Qual · Travel</span><span class="ti-value">${d.form||'N/A'} · ${d.p}% · ~${(travel/1000).toFixed(0)}k km</span></div>
     <div class="ti-row"><span class="ti-label">Group Path</span><span class="ti-value">1st:${qual[0]}% 2nd:${qual[1]}% 3rd:${qual[2]}% Elim:${qual[3]}%</span></div>
     ${champAll!==undefined?`<div class="ti-row"><span class="ti-label">Title Prob</span><span class="ti-value">${champAll}%</span></div>`:''}
