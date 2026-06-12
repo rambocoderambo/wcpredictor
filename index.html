@@ -45,7 +45,8 @@ input[type=number]{-moz-appearance:textfield}
 .btn-danger{background:transparent;color:var(--error);padding:.4rem .75rem;font-size:.8rem;border:1px solid transparent}
 .btn-danger:hover{border-color:var(--error)}
 .btn-group{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
-.results{display:none;margin-top:1.5rem}
+.results{display:none;margin-top:1.5rem;animation:rfade .4s ease-out}
+@keyframes rfade{from{opacity:0;transform:translateY(.5rem)}to{opacity:1;transform:translateY(0)}}
 .results.visible{display:block}
 .best-pick{background:var(--surface);border:2px solid var(--primary);border-radius:10px;padding:1.25rem;margin-bottom:1rem;position:relative}
 .best-pick .badge{position:absolute;top:-10px;left:1rem;background:var(--primary);color:oklch(0.95 0 0);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .6rem;border-radius:4px}
@@ -95,6 +96,14 @@ input[type=number]{-moz-appearance:textfield}
 .container{padding:1rem}
 .odds-row{grid-template-columns:1fr}
 .history-item{grid-template-columns:1fr auto;gap:.25rem}
+.sb-label{min-width:4rem;font-size:.62rem}
+.sb-val{min-width:2rem;font-size:.62rem}
+.team-info{font-size:.72rem}
+.inner{padding:1rem}
+.form-grid{grid-template-columns:1fr;gap:.5rem}
+.form-grid .vs{text-align:center}
+.btn-group{flex-direction:column}
+.btn-group .btn{width:100%;justify-content:center}
 }
 </style>
 </head>
@@ -121,6 +130,7 @@ input[type=number]{-moz-appearance:textfield}
 
       <div id="teamInfoA" class="team-info"></div>
       <div id="teamInfoB" class="team-info"></div>
+      <div id="teamCompare" style="display:none;margin-top:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem;font-size:.75rem"></div>
 
       <div style="margin-bottom:.75rem;font-size:.8rem;color:var(--muted);padding:.5rem;background:var(--surface);border-radius:6px;border:1px solid var(--border);margin-bottom:.75rem">
         For each handicap row, enter the home and away odds.<br>The engine scores all 6 bets (3 lines × 2 sides) and ranks them by value.
@@ -1220,10 +1230,11 @@ function toggleTheme(){
 function exportPredictions(){
   const h=getHist();
   if(!h.length){alert('No predictions to export.');return}
-  const blob=new Blob([JSON.stringify(h,null,2)],{type:'application/json'});
+  const data={version:VERSION,exported:new Date().toISOString().slice(0,10),predictions:h};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='wc-predictions-export.json';
+  a.download='wcp-v'+VERSION+'-'+(new Date().toISOString().slice(0,10))+'.json';
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -1233,14 +1244,14 @@ function importPredictions(input){
   const reader=new FileReader();
   reader.onload=function(e){
     try{
-      const data=JSON.parse(e.target.result);
+      const raw=JSON.parse(e.target.result);
+      // Support both old format (array) and new format ({version,predictions})
+      const data=Array.isArray(raw)?raw:raw.predictions;
       if(!Array.isArray(data)||!data.length)throw new Error('Empty or invalid');
-      // Validate structure
       const valid=data.every(x=>x.teamA&&x.teamB&&x.pick!==undefined);
       if(!valid)throw new Error('Invalid prediction format');
       const existing=getHist();
       const merged=[...existing,...data];
-      // Deduplicate by id
       const seen=new Set();
       const deduped=merged.filter(x=>{const k=x.id;if(seen.has(k))return false;seen.add(k);return true});
       if(deduped.length>50)deduped.length=50;
@@ -1317,13 +1328,39 @@ function showTeamInfo(selId,infoId){
     ${age?`<div class="ti-row"><span class="ti-label">Squad Age · Manager</span><span class="ti-value">${age}yr${mgr?' · '+mgr:''}</span></div>`:''}
     <div class="ti-row"><span class="ti-label">Injuries</span><span class="ti-value">${d.injuries||'N/A'}</span></div>
     ${injPlayers?`<div class="ti-row"><span class="ti-label">Key Injury Risks</span><span class="ti-value">${injPlayers.join('; ')}</span></div>`:''}
-    ${liveInjuries.length?`<div class="ti-row"><span class="ti-label">Injury Updates</span><span class="ti-value">${liveInjuries.map(i=>i.player+' ('+i.injury+')').join('; ')}</span></div>`:''}
+    ${liveInjuries.length?`<div class="ti-row"><span class="ti-label">Injury Updates</span><span class="ti-value">${liveInjuries.map(i=>i.player+' ('+i.injury+') <span style="font-size:.6rem;padding:.05rem .3rem;border-radius:3px;background:'+(i.status==='OUT'?'var(--error)':i.status==='DOUBT'?'var(--warning)':'var(--success)')+';color:'+(i.status==='OUT'?'oklch(0.95 0 0)':'oklch(0.15 0.05 85)')+';font-weight:700;text-transform:uppercase">'+i.status+'</span>').join('; ')}</span></div>`:''}
     <div class="ti-row"><span class="ti-label">Kimi Analysis</span><span class="ti-value" style="font-size:.75rem">${d.np||''}</span></div>
   `;
   el.classList.add('visible');
   const tA=$('teamA').value||'Team A',tB=$('teamB').value||'Team B';
   $('homeLabel').innerHTML=tA+' (Home) <span>odds</span>';
   $('awayLabel').innerHTML=tB+' (Away) <span>odds</span>';
+  if(tA&&tB&&tA!=='Team A'&&tB!=='Team B')compareTeams();
+}
+function compareTeams(){
+  const aName=$('teamA').value,bName=$('teamB').value,el=$('teamCompare');
+  if(!aName||!bName||!TEAM_DATA[aName]||!TEAM_DATA[bName]){if(el)el.style.display='none';return}
+  const a=gt(aName),b=gt(bName);
+  const wcA=a.wcMatches||0,wcB=b.wcMatches||0;
+  const rows=[
+    {label:'FIFA Rank',a:a.fifaRank,b:b.fifaRank,u:''},
+    {label:'Elo',a:ELO[aName]||'—',b:ELO[bName]||'—',u:''},
+    {label:'Win Rate',a:(a.wr*100).toFixed(0)+'%',b:(b.wr*100).toFixed(0)+'%',p:a.wr*100,bp:b.wr*100},
+    {label:'AH Cover',a:(a.ah*100).toFixed(0)+'%',b:(b.ah*100).toFixed(0)+'%',p:a.ah*100,bp:b.ah*100},
+    {label:'Goals/G',a:(wcA>0?a.gs/wcA:a.gs).toFixed(2),b:(wcB>0?b.gc/wcB:b.gc).toFixed(2),p:(wcA>0?a.gs/wcA:a.gs)*20,bp:(wcB>0?b.gs/wcB:b.gs)*20},
+    {label:'Possession',a:(a.possession||50).toFixed(0)+'%',b:(b.possession||50).toFixed(0)+'%',p:a.possession||50,bp:b.possession||50},
+    {label:'Clean Sheet',a:((wcA>0?a.cleanSheets/wcA:a.ah)*100).toFixed(0)+'%',b:((wcB>0?b.cleanSheets/wcB:b.ah)*100).toFixed(0)+'%',p:(wcA>0?a.cleanSheets/wcA:a.ah)*100,bp:(wcB>0?b.cleanSheets/wcB:b.ah)*100},
+    {label:'Shots/G',a:((wcA>0?(a.shotsOnTarget+a.shotsOffTarget)/wcA:0)).toFixed(1),b:((wcB>0?(b.shotsOnTarget+b.shotsOffTarget)/wcB:0)).toFixed(1),p:(wcA>0?(a.shotsOnTarget+a.shotsOffTarget)/wcA:0)*10,bp:(wcB>0?(b.shotsOnTarget+b.shotsOffTarget)/wcB:0)*10},
+    {label:'Discipline',a:(wcA>0?a.yellowCards/wcA:a.cards).toFixed(1)+'YC',b:(wcB>0?b.yellowCards/wcB:b.cards).toFixed(1)+'YC',p:100-((wcA>0?a.yellowCards/wcA:a.cards)*20),bp:100-((wcB>0?b.yellowCards/wcB:b.cards)*20)}
+  ];
+  const sA=STANDINGS[aName],sB=STANDINGS[bName];
+  if(sA&&sB&&sA.played>0&&sB.played>0)rows.unshift({label:'Group Pos',a:'#'+sA.rank+' ('+sA.points+'pts)',b:'#'+sB.rank+' ('+sB.points+'pts)',p:sA.rank<=2?80:30,bp:sB.rank<=2?80:30});
+  el.innerHTML='<div style="font-weight:700;font-size:.8rem;color:var(--ink);margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--border)">Team Comparison</div>'+
+    rows.map(r=>{
+      const bar=r.p!==undefined?`<div style="display:flex;align-items:center;gap:.3rem"><div class="sb-track" style="flex:1"><div class="sb-fill good" style="width:${Math.round(Math.min(r.p,100))}%;transition:width .5s ease-out"></div></div><span class="sb-val" style="font-size:.65rem;text-align:center;min-width:1.5rem">vs</span><div class="sb-track" style="flex:1"><div class="sb-fill" style="width:${Math.round(Math.min(r.bp,100))}%;background:var(--primary);transition:width .5s ease-out"></div></div></div>`:'';
+      return `<div style="display:grid;grid-template-columns:5rem 1fr 2.5rem 1fr;gap:.25rem;align-items:center;padding:.2rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:.68rem">${r.label}</span><span style="text-align:right;font-weight:600;font-size:.72rem">${r.a}</span><span style="text-align:center;font-size:.65rem;color:var(--muted)"></span><span style="font-weight:600;font-size:.72rem">${r.b}</span></div>`+(!bar?'':`<div style="grid-column:2/5;margin-bottom:.2rem">${bar}</div>`);
+    }).join('');
+  el.style.display='block';
 }
 
 // ===== INIT =====
