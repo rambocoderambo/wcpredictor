@@ -1,22 +1,11 @@
-import * as apiFootball from './sources/api-football.js';
-import * as sofascore from './sources/sofascore.js';
-import * as footballData from './sources/football-data.js';
-import {setLiveData,readIndex,getVersion} from './update-index.js';
-import {TEAM_NAMES,toApiFootball} from './team-mapping.js';
+import {readFileSync,writeFileSync} from 'fs';
+import {getAllMatches,toOurName} from './sources/fifa-api.js';
+import {TEAM_NAMES} from './team-mapping.js';
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-const SOFASCORE_KEY1 = process.env.SOFASCORE_KEY1;
-const SOFASCORE_KEY2 = process.env.SOFASCORE_KEY2;
-const FOOTBALL_DATA_KEY = process.env.FOOTBALL_DATA_KEY;
+const PATH=process.argv[2]||'index.html';
 
-if(!RAPIDAPI_KEY){console.error('Missing RAPIDAPI_KEY');process.exit(1)}
-if(!FOOTBALL_DATA_KEY){console.error('Missing FOOTBALL_DATA_KEY');process.exit(1)}
-
-apiFootball.init(RAPIDAPI_KEY);
-sofascore.init(SOFASCORE_KEY1||RAPIDAPI_KEY);
-footballData.init(FOOTBALL_DATA_KEY);
-
-const today=new Date().toISOString().slice(0,10);
+function readHtml(){return readFileSync(PATH,'utf-8')}
+function writeHtml(c){writeFileSync(PATH,c,'utf-8')}
 
 function emptyData(){return{
   wcForm:'',wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,
@@ -28,7 +17,7 @@ function emptyData(){return{
 
 function emptyDataObj(){const o={};for(const t of TEAM_NAMES)o[t]=emptyData();return o}
 
-function getExistingLiveData(html){
+function parseLiveData(html){
   const m=html.match(/const LIVE_DATA = (\{[\s\S]*?\});/);
   if(!m)return emptyDataObj();
   try{
@@ -36,179 +25,117 @@ function getExistingLiveData(html){
     const parsed=JSON.parse(clean);
     for(const t of TEAM_NAMES){if(!parsed[t])parsed[t]=emptyData()}
     return parsed;
-  }catch(e){return emptyDataObj()}
+  }catch{return emptyDataObj()}
 }
 
-function deriveForm(matches,team){
-  const teamMatches=matches.filter(m=>m.home===team||m.away===team);
-  const last10=teamMatches.slice(-10);
-  return last10.map(m=>{
-    if(m.homeGoals===null||m.awayGoals===null)return '';
-    const isHome=m.home===team;
-    const gf=isHome?m.homeGoals:m.awayGoals;
-    const ga=isHome?m.awayGoals:m.homeGoals;
-    if(gf>ga)return'W';if(gf<ga)return'L';return'D';
-  }).filter(Boolean).join('-');
-}
-
-function getH2h(liveData,teamA,teamB){
-  if(liveData[teamA]?.wcH2h)return liveData[teamA].wcH2h;
-  if(liveData[teamB]?.wcH2h)return liveData[teamB].wcH2h;
-  return null;
-}
-
-async function fetchTodayMatches(){
-  try{
-    const fixtures=await apiFootball.getFixtures(today);
-    if(fixtures.length)return fixtures;
-  }catch(e){console.warn('API-Football fixtures failed:',e.message)}
-  try{
-    const yesterday=new Date(Date.now()-864e5).toISOString().slice(0,10);
-    const matches=await footballData.getMatches(yesterday,today);
-    if(matches.length)return matches.map(m=>({
-      id:0,date:m.date,status:m.status==='FINISHED'?'FT':'SCHEDULED',
-      home:m.home,away:m.away,homeGoals:m.homeScore,awayGoals:m.awayScore,
-      venue:'',city:'',elapsed:0
-    }));
-  }catch(e){console.warn('Football-data.org fallback failed:',e.message)}
-  return [];
-}
-
-async function fetchMatchStats(fixtureId){
-  try{return await apiFootball.getFixtureStats(fixtureId)}
-  catch(e){console.warn('Stats fetch failed for',fixtureId,':',e.message)}
-  return null;
-}
-
-async function fetchMatchEvents(fixtureId){
-  try{return await apiFootball.getFixtureEvents(fixtureId)}
-  catch(e){console.warn('Events fetch failed for',fixtureId,':',e.message)}
-  return [];
-}
-
-async function fetchTeamInjuries(){
-  try{return await apiFootball.getInjuries()}
-  catch(e){console.warn('Injuries fetch failed:',e.message)}
-  return {};
+function buildLiveDataJs(liveData){
+  const teams=Object.keys(liveData).sort();
+  const lines=teams.map(t=>{
+    const d=liveData[t];
+    return `  "${t}":{wcForm:"${d.wcForm||''}",wcGs:${d.wcGs??0},wcGc:${d.wcGc??0},wcWr:${d.wcWr??0},wcAh:${d.wcAh??0},wcMatches:${d.wcMatches??0},wcCards:${d.wcCards??0},wcReds:${d.wcReds??0},wcPossession:${d.wcPossession??0},wcShots:${d.wcShots??0},wcShotsConceded:${d.wcShotsConceded??0},wcGkSaves:${d.wcGkSaves??0},wcFouls:${d.wcFouls??0},wcOffsides:${d.wcOffsides??0},wcPensAwarded:${d.wcPensAwarded??0},wcLateGoals:${d.wcLateGoals??0},wcCleanSheets:${d.wcCleanSheets??0},wcRestDays:${d.wcRestDays??0},wcH2h:${JSON.stringify(d.wcH2h)||'null'},wcFormation:${d.wcFormation??0}}`;
+  });
+  return 'const LIVE_DATA = {\n'+lines.join(',\n')+'\n};';
 }
 
 async function main(){
-  console.log('=== WC Data Refresh '+today+' ===');
+  console.log('=== Rambo Action Sync ===');
   let html;
-  try{html=readIndex()}catch(e){console.error('Cannot read index.html');process.exit(1)}
-  const liveData=getExistingLiveData(html);
-  const injuries=await fetchTeamInjuries();
+  try{html=readHtml()}catch(e){console.error('Cannot read index.html');process.exit(1)}
+  const liveData=parseLiveData(html);
 
-  // build injury text per team
-  const injuryText={};
-  for(const t of TEAM_NAMES){
-    const list=injuries[t]||[];
-    if(list.length){
-      const active=list.filter(i=>i.status!=='Recovered'&&i.status!=='Unknown');
-      if(active.length){
-        injuryText[t]=active.map(i=>i.player+' ('+i.type+')').join('; ');
-      }
-    }
+  // Fetch all 104 WC 2026 matches from FIFA API
+  let matches;
+  try{
+    matches=await getAllMatches();
+    console.log('FIFA API: '+matches.length+' matches loaded');
+  }catch(e){
+    console.error('FIFA API failed:',e.message);
+    console.log('No data update this run');
+    process.exit(1);
   }
 
-  // Step 1: fetch today's matches
-  const matches=await fetchTodayMatches();
-  console.log('Matches found:',matches.length);
+  // Parse already-processed match IDs
+  let processed={};
+  const pm=html.match(/const WC_PROCESSED = (\{[\s\S]*?\});/);
+  if(pm)try{
+    const raw=pm[1].replace(/(\w+):/g,'"$1":').replace(/;$/,'');
+    processed=JSON.parse(raw);
+  }catch{}
 
-  // Step 2: process each match
-  for(const m of matches){
-    if(m.homeGoals===null||m.awayGoals===null)continue;
+  // Filter to only new finished matches
+  const finished=matches.filter(m=>m.status===0&&m.homeScore!==null&&m.awayScore!==null&&!processed[m.id]);
+  console.log('New finished matches: '+finished.length+' / '+matches.filter(m=>m.status===0&&m.homeScore!==null&&m.awayScore!==null).length+' total finished');
 
-    const h=m.home,a=m.away;
-    for(const t of[h,a]){
-      if(!liveData[t])continue;
-      const d=liveData[t];
-      const gf=t===h?m.homeGoals:m.awayGoals;
-      const ga=t===h?m.awayGoals:m.homeGoals;
+  for(const m of finished){
+    const h=toOurName(m.home),a=toOurName(m.away);
+    if(!TEAM_NAMES.includes(h)||!TEAM_NAMES.includes(a))continue;
+
+    for(const team of[h,a]){
+      if(!liveData[team])continue;
+      const d=liveData[team];
+      const gf=team===h?m.homeScore:m.awayScore;
+      const ga=team===h?m.awayScore:m.homeScore;
       d.wcGs+=gf;d.wcGc+=ga;d.wcMatches++;
-      d.wcWr=d.wcMatches>0?((d.wcForm.split('-').filter(x=>x==='W').length)/d.wcMatches):0;
 
-      // clean sheet
+      // Clean sheet
       if(ga===0)d.wcCleanSheets++;
 
-      // AH cover estimate: +0.5 line covers if team wins
-      const margin=gf-ga;
-      if(margin>0)d.wcAh=((d.wcAh*(d.wcMatches-1))+(margin>0?1:0))/d.wcMatches;
+      // AH cover: team wins by 1+ for -0.5 line
+      if(gf-ga>0)d.wcAh=((d.wcAh*(d.wcMatches-1))+1)/d.wcMatches;
+      else d.wcAh=((d.wcAh*(d.wcMatches-1))+0)/d.wcMatches;
 
-      // form string
+      // Form string (last 10)
       const cur=d.wcForm?d.wcForm.split('-'):[];
-      const result=gf>ga?'W':gf<ga?'L':'D';
-      cur.push(result);
+      cur.push(gf>ga?'W':gf<ga?'L':'D');
       if(cur.length>10)cur.shift();
       d.wcForm=cur.join('-');
-    }
-  }
+      d.wcWr=d.wcForm?cur.filter(x=>x==='W').length/cur.length:0;
 
-  // Step 3: fetch detailed stats for each match (from API-Football)
-  for(const m of matches){
-    if(!m.id)continue;
-    const stats=await fetchMatchStats(m.id);
-    if(!stats)continue;
-
-    const h=m.home,a=m.away;
-    // determine which stats side is home/away by checking team name
-    const homeStats=stats.home,awayStats=stats.away;
-
-    for(const t of[h,a]){
-      if(!liveData[t])continue;
-      const d=liveData[t];
-      const st=t===h?homeStats:awayStats;
-      if(!st||!Object.keys(st).length)continue;
-      d.wcShots+=st.totalShots||0;
-      d.wcShotsConceded+=t===h?(awayStats.totalShots||0):(homeStats.totalShots||0);
-      d.wcGkSaves+=st.goalkeeperSaves||0;
-      d.wcFouls+=st.fouls||0;
-      d.wcOffsides+=st.offsides||0;
-      d.wcPossession=d.wcMatches>0?((d.wcPossession*(d.wcMatches-1)+(st.possession||0))/d.wcMatches):(st.possession||0);
-      d.wcCards+=st.yellowCards||0;
-      if(st.redCards)d.wcReds+=st.redCards;
-    }
-
-    // events for penalties and late goals
-    try{
-      const events=await fetchMatchEvents(m.id);
-      for(const t of[h,a]){
-        if(!liveData[t])continue;
-        const d=liveData[t];
-        const teamEvents=events.filter(e=>e.team.toLowerCase()===toApiFootball(t).toLowerCase());
-        const pens=teamEvents.filter(e=>e.type==='Penalty'||e.detail==='Penalty goal');
-        d.wcPensAwarded+=pens.length;
-        const lateG=teamEvents.filter(e=>e.type==='Goal'&&e.time>=75);
-        d.wcLateGoals+=lateG.length;
+      // Possession from FIFA API (guard against NaN)
+      if(team===h&&m.possessionHome!==null&&!isNaN(m.possessionHome)){
+        d.wcPossession=d.wcMatches>0?((d.wcPossession*(d.wcMatches-1)+m.possessionHome)/d.wcMatches):m.possessionHome;
+      }else if(team===a&&m.possessionAway!==null&&!isNaN(m.possessionAway)){
+        d.wcPossession=d.wcMatches>0?((d.wcPossession*(d.wcMatches-1)+m.possessionAway)/d.wcMatches):m.possessionAway;
       }
-    }catch(e){/* events are non-critical */}
+
+      // Formation stability (tactics)
+      const tactics=team===h?m.tacticsHome:m.tacticsAway;
+      if(tactics){
+        const curForm=d.wcFormation||0;
+        d.wcFormation=curForm+1;  // count matches with formation data
+      }
+    }
   }
 
-  // Step 4: fetch H2H from Sofascore for each team pair
-  for(const t of TEAM_NAMES){
-    if(!liveData[t])continue;
-    const d=liveData[t];
-    if(!d.wcH2h)d.wcH2h={};
+  // Write updated LIVE_DATA
+  const newBlock=buildLiveDataJs(liveData);
+  html=html.replace(/const LIVE_DATA = \{[\s\S]*?\};/,newBlock);
+
+  // Track processed match IDs
+  const hadNew=finished.length>0;
+  for(const m of finished)processed[m.id]=true;
+  const procStr=JSON.stringify(processed);
+  html=html.replace(/const WC_PROCESSED = \{[\s\S]*?\};/,'const WC_PROCESSED = '+procStr+';');
+
+  // Bump version only when new matches processed
+  const vMatch=html.match(/const VERSION = "([\d.]+)"/);
+  let verStr=vMatch?vMatch[1]:'1.01';
+  if(hadNew&&vMatch){
+    const raw=parseFloat(vMatch[1]);
+    const next=(raw+0.01).toFixed(2);
+    html=html.replace(/const VERSION = "[\d.]+"/,'const VERSION = "'+next+'"');
+    html=html.replace(/<strong>v[\d.]+<\/strong> — /,'<strong>v'+next+'</strong> — ');
+    verStr=next;
   }
 
-  // Step 5: update injury text (we store it as a separate constant)
-  // Add INJURY_LIVE to HTML if we got data
-  let htmlOut=html;
-  const injKeys=Object.keys(injuryText);
-  if(injKeys.length){
-    const injJs='const INJURY_LIVE = '+JSON.stringify(injuryText,null,1)+';';
-    htmlOut=htmlOut.replace(/const INJURY_LIVE = \{[\s\S]*?\};/g,'');
-    htmlOut=htmlOut.replace(/const TEAM_DATA = \{/,injJs+'\n\nconst TEAM_DATA = {');
-  }
+  // Update LAST_SYNC
+  const now=new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Singapore'});
+  html=html.replace(/const LAST_SYNC = "[^"]*"/,'const LAST_SYNC = "'+now+'"');
 
-  // Step 6: write updated data
-  try{
-    setLiveData(liveData);
-    console.log('Data refresh complete. Version:',getVersion(readIndex()));
-  }catch(e){
-    console.error('Write failed:',e.message);
-    process.exit(1)
-  }
+  writeHtml(html);
+  console.log('Sync complete. Version: '+verStr+', LAST_SYNC: '+now);
+  if(hadNew)console.log('Stats accumulated: '+(finished.length*2)+' team-matches processed');
+  else console.log('No new matches to process');
 }
 
 main().catch(e=>{console.error('Fatal:',e);process.exit(1)});

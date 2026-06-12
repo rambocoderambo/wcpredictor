@@ -198,7 +198,7 @@ input[type=number]{-moz-appearance:textfield}
 </div>
 
 <div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">
-  <strong>v1.1</strong> — Live WC data: attack/defense/discipline/late-goals scoring · 15 dimensions · Rambo Action auto-refresh 6PM/12AM GMT+8 · API-Football + Sofascore + Football-data.org
+  <strong>v1.04</strong> — Live WC match results · Rambo Action auto-refresh 6PM/12AM GMT+8 · Data: FIFA API + Football-data.org
 </div>
 
 <script>
@@ -297,10 +297,60 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 // Championship title probabilities (Kimi Ch.8)
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
-const VERSION = "1.1";
-const LAST_SYNC = "—";
+const VERSION = "1.01";
+const LAST_SYNC = "Jun 12, 12:37 PM";
+const WC_PROCESSED = {"400021441":true,"400021443":true};
 
-const LIVE_DATA = {};
+const LIVE_DATA = {
+  "Algeria":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Argentina":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Australia":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Austria":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Belgium":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Bosnia and Herzegovina":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Brazil":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Canada":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Cape Verde":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Colombia":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Croatia":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Curacao":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Czech Republic":{wcForm:"L-L",wcGs:2,wcGc:4,wcWr:0,wcAh:0,wcMatches:2,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:2},
+  "DR Congo":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Ecuador":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Egypt":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "England":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "France":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Germany":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Ghana":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Haiti":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Iran":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Iraq":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Ivory Coast":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Japan":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Jordan":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Mexico":{wcForm:"W-W",wcGs:4,wcGc:0,wcWr:1,wcAh:1,wcMatches:2,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:2,wcRestDays:0,wcH2h:null,wcFormation:2},
+  "Morocco":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Netherlands":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "New Zealand":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Norway":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Panama":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Paraguay":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Portugal":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Qatar":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Saudi Arabia":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Scotland":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Senegal":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "South Africa":{wcForm:"L-L",wcGs:0,wcGc:4,wcWr:0,wcAh:0,wcMatches:2,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:2},
+  "South Korea":{wcForm:"W-W",wcGs:4,wcGc:2,wcWr:1,wcAh:1,wcMatches:2,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:2},
+  "Spain":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Sweden":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Switzerland":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Tunisia":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Turkey":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "United States":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Uruguay":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0},
+  "Uzbekistan":{wcForm:"",wcGs:0,wcGc:0,wcWr:0,wcAh:0,wcMatches:0,wcCards:0,wcReds:0,wcPossession:0,wcShots:0,wcShotsConceded:0,wcGkSaves:0,wcFouls:0,wcOffsides:0,wcPensAwarded:0,wcLateGoals:0,wcCleanSheets:0,wcRestDays:0,wcH2h:null,wcFormation:0}
+};
 
 const TEAM_DATA = {
   "Mexico":{g:"A",p:82,elo:1770,fifaRank:15,wr:.58,gs:1.5,gc:.9,ah:.5,qual:"82%",injuries:"Jimenez fit at 35. Alvarez captain.",cards:1.9,reds:0,form:"W-D-W-L-D",np:"Host. All 3 matches Azteca (2,240m). Shortest travel (5,163km). Always R16."},
