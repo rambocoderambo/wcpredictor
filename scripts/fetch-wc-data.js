@@ -2,6 +2,7 @@ import {readFileSync,writeFileSync} from 'fs';
 import {getAllMatches,toOurName} from './sources/fifa-api.js';
 import * as footballData from './sources/football-data.js';
 import {getAvailableMatches as lsGetMatches,getMatchStats,getMatchIncidents,getMatchH2h,getGroupStandings,extractLiveStats,toOurName as lsToOurName} from './sources/livescore.js';
+import {getInjuries} from './sources/espn-injuries.js';
 import {TEAM_NAMES} from './team-mapping.js';
 
 const PATH=process.argv[2]||'index.html';
@@ -225,6 +226,16 @@ async function main(){
         (html=html.replace('const VERSION','const STANDINGS = {};\nconst VERSION'));
     }
   }catch(e){console.warn('Standings fetch failed:',e.message)}
+
+  // Fetch ESPN injuries
+  try{
+    const injuries=await getInjuries();
+    if(Object.keys(injuries).length){
+      const injStr=JSON.stringify(injuries,null,1);
+      html=html.replace(/const INJURIES_LIVE = \{[\s\S]*?\};/,'const INJURIES_LIVE = '+injStr+';')||
+        (html=html.replace('const STANDINGS','const INJURIES_LIVE = {};\nconst STANDINGS'));
+    }
+  }catch(e){console.warn('ESPN injuries fetch failed:',e.message)}
 
   // Write updated LIVE_DATA
   const newBlock=buildLiveDataJs(liveData);

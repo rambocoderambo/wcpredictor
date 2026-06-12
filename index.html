@@ -298,7 +298,183 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 // Championship title probabilities (Kimi Ch.8)
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
-const VERSION = "1.04";
+const VERSION = "1.05";
+const INJURIES_LIVE = {
+ "Brazil": [
+  {
+   "player": "Brazil",
+   "injury": "Torn hamstring",
+   "status": "OUT"
+  }
+ ],
+ "Germany": [
+  {
+   "player": "Germany",
+   "injury": "Torn adductor",
+   "status": "OUT"
+  },
+  {
+   "player": "Germany",
+   "injury": "Torn thigh muscle",
+   "status": "OUT"
+  }
+ ],
+ "Netherlands": [
+  {
+   "player": "Netherlands",
+   "injury": "Groin strain",
+   "status": "OUT"
+  },
+  {
+   "player": "Netherlands",
+   "injury": "Torn ACL",
+   "status": "OUT"
+  },
+  {
+   "player": "Matthijs de Ligt",
+   "injury": "Back",
+   "status": "OUT"
+  }
+ ],
+ "Japan": [
+  {
+   "player": "Kaoru Mitoma",
+   "injury": "Torn hamstring",
+   "status": "OUT"
+  },
+  {
+   "player": "Japan",
+   "injury": "Torn ACL",
+   "status": "OUT"
+  }
+ ],
+ "France": [
+  {
+   "player": "France",
+   "injury": "Torn Achilles tendon",
+   "status": "OUT"
+  },
+  {
+   "player": "France",
+   "injury": "Back",
+   "status": "LIKELY"
+  }
+ ],
+ "United States": [
+  {
+   "player": "United States",
+   "injury": "Torn Achilles tendon",
+   "status": "OUT"
+  },
+  {
+   "player": "United States",
+   "injury": "Ankle sprain",
+   "status": "OUT"
+  },
+  {
+   "player": "United States",
+   "injury": "Torn ankle ligaments",
+   "status": "LIKELY"
+  }
+ ],
+ "Australia": [
+  {
+   "player": "Australia",
+   "injury": "Torn Achilles tendon",
+   "status": "OUT"
+  }
+ ],
+ "Spain": [
+  {
+   "player": "Spain",
+   "injury": "Metatarsal fracture",
+   "status": "OUT"
+  },
+  {
+   "player": "Spain",
+   "injury": "Partially torn hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Canada": [
+  {
+   "player": "Marcelo Flores",
+   "injury": "ACL",
+   "status": "OUT"
+  },
+  {
+   "player": "Alphonso Davies",
+   "injury": "Hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Scotland": [
+  {
+   "player": "Billy Gilmour",
+   "injury": "Knee",
+   "status": "OUT"
+  }
+ ],
+ "Argentina": [
+  {
+   "player": "Argentina",
+   "injury": "Partially torn MCL",
+   "status": "DOUBT"
+  },
+  {
+   "player": "Argentina",
+   "injury": "Thigh injury",
+   "status": "DOUBT"
+  },
+  {
+   "player": "Argentina",
+   "injury": "Thigh injury",
+   "status": "LIKELY"
+  }
+ ],
+ "England": [
+  {
+   "player": "England",
+   "injury": "Thigh",
+   "status": "DOUBT"
+  }
+ ],
+ "Ghana": [
+  {
+   "player": "Ghana",
+   "injury": "Hamstring",
+   "status": "DOUBT"
+  }
+ ],
+ "Uruguay": [
+  {
+   "player": "Uruguay",
+   "injury": "Ankle sprain",
+   "status": "DOUBT"
+  }
+ ],
+ "Morocco": [
+  {
+   "player": "Morocco",
+   "injury": "Pulled hamstring",
+   "status": "LIKELY"
+  }
+ ],
+ "Algeria": [
+  {
+   "player": "Algeria",
+   "injury": "Fractured jaw and chin",
+   "status": "LIKELY"
+  }
+ ],
+ "Croatia": [
+  {
+   "player": "Croatia",
+   "injury": "Fractured cheekbone",
+   "status": "LIKELY"
+  }
+ ]
+};
 const STANDINGS = {
  "Mexico": {
   "rank": 1,
@@ -349,7 +525,7 @@ const VERSION_HISTORY = [
   {v:"1.02",date:"Jun 12",msg:"LiveScore scraping: shots, cards, fouls, corners, GK saves — all match stats live"},
   {v:"1.01",date:"Jun 12",msg:"Rambo Action launch: FIFA API auto-sync, Football-data.org fallback, dedup"}
 ],{v:"1.03",date:"Jun 12",msg:"Live match data: 4 team-matches processed"}
-const LAST_SYNC = "Jun 12, 05:25 PM";
+const LAST_SYNC = "Jun 12, 05:54 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true};
 const WC_PROCESSED = {"400021441":true,"400021443":true};
 
@@ -681,10 +857,58 @@ function ctxScore(teamA,teamB){
   const stA=STANDINGS[teamA],stB=STANDINGS[teamB];
   if(stA&&stB&&stA.played>0&&stB.played>0){
     const ptDiff=stA.points-stB.points;
-    // Team trailing by 3+ pts needs win more — small boost
     if(ptDiff<=-3)s+=.02;
     if(ptDiff>=3)s-=.02;
   }
+  return clamp(s,0,1);
+}
+
+// Non-linear interaction scoring
+function matchupScore(teamA,teamB){
+  const a=gt(teamA),b=gt(teamB);
+  if(!a||!b)return.5;
+  let s=.5;
+  // Interaction: high attack vs low defense = bonus for attacker
+  if(a.wcMatches>0&&b.wcMatches>0){
+    const aShotPerG=a.wcMatches>0?((a.shotsOnTarget+a.shotsOffTarget)/a.wcMatches):0;
+    const bDefConc=b.wcMatches>0?((b.shotsConcededTarget+b.shotsConcededOffTarget)/b.wcMatches):0;
+    // If attacker's shots > 12/game AND defender concedes > 12 shots/game = bonus
+    if(aShotPerG>12&&bDefConc>12)s+=.04;
+    if(aShotPerG>15&&bDefConc>15)s+=.03;
+    // If attacker shoots a lot but defender concedes very few = mismatch
+    if(aShotPerG>12&&bDefConc<8)s-=.03;
+  }
+  // Second interaction: discipline vs opponent's discipline
+  if(a.yellowCards>2&&b.yellowCards>2)s+=.02; // Both undisciplined = chaotic match
+  return clamp(s,0,1);
+}
+function motivationScore(teamA,teamB){
+  const stA=STANDINGS[teamA],stB=STANDINGS[teamB];
+  if(!stA||!stB||stA.played<2||stB.played<2)return.5;
+  let s=.5;
+  const gamesLeft=3-stA.played;
+  if(gamesLeft<=0)return.5;
+  const maxPts=stA.points+gamesLeft*3;
+  const needPts=stB.points-stA.points;
+  // Must-win scenario: trailing by more than remaining pts can cover
+  if(stA.points<stB.points&&maxPts<stB.points){s+=.05}
+  // Must-win for qualification: 4pts target for 3rd place
+  const need4th=4-stA.points;
+  if(need4th>0&&need4th<=gamesLeft*3&&stA.points<4){s+=.03}
+  return clamp(s,0,1);
+}
+function fatigueScore(team){
+  const d=gt(team);
+  if(!d||d.wcMatches<2)return.5;
+  let s=.5;
+  // More matches in short span = fatigue
+  if(d.wcMatches>=3)s-=.02;
+  if(d.wcMatches>=5)s-=.03;
+  // Already qualified teams might rest players (top of group)
+  const st=STANDINGS[team];
+  if(st&&st.played>=3&&st.rank===1)s-=.02;
+  return clamp(s,0,1);
+}
   return clamp(s,0,1);
 }
 
@@ -744,8 +968,11 @@ function scoreBet(teamA,teamB,b,a,bd){
   const dS=defScore(pickT);
   const discS=disciplineScore(pickT);
   const lS=lateScore(pickT);
+  const mS=matchupScore(pickT,oppT);
+  const moS=motivationScore(pickT,oppT);
+  const fS2=fatigueScore(pickT);
 
-  const total=evV*.25+fS*.10+aS*.15+dS*.15+discS*.10+cS*.10+lS*.10+oS*.05;
+  const total=evV*.22+fS*.08+aS*.12+dS*.12+discS*.08+cS*.08+lS*.08+mS*.08+moS*.06+fS2*.03+oS*.05;
 
   // Market divergence bonus
   const div=DIVERGENCE[pickT]||0;
@@ -1035,6 +1262,7 @@ function showTeamInfo(selId,infoId){
   const travel=TRAVEL[name]||'?';
   const eloDiff=ELO_DIFF[name];
   const injPlayers=INJURY_MATRIX[name];
+  const liveInjuries=INJURIES_LIVE[name]||[];
   const age=SQUAD_AGE[name];
   const mgr=MANAGERS[name];
   const poly=POLYMARKET[name];
@@ -1058,6 +1286,7 @@ function showTeamInfo(selId,infoId){
     <div class="ti-row"><span class="ti-label">Form · Cards</span><span class="ti-value">${d.form} · ${d.cards}YC ${d.reds}RC</span></div>
     <div class="ti-row"><span class="ti-label">Injuries</span><span class="ti-value">${d.injuries}</span></div>
     ${injPlayers?`<div class="ti-row"><span class="ti-label">Key Injury Risks</span><span class="ti-value">${injPlayers.join('; ')}</span></div>`:''}
+    ${liveInjuries.length?`<div class="ti-row"><span class="ti-label">Injury Updates (ESPN)</span><span class="ti-value" style="font-size:.7rem">${liveInjuries.map(i=>i.player+' ('+i.injury+')').join('; ')}</span></div>`:''}
     <div class="ti-row"><span class="ti-label">Kimi Analysis</span><span class="ti-value" style="font-size:.75rem">${d.np||''}</span></div>
   `;
   el.classList.add('visible');
