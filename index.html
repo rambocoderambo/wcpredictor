@@ -198,7 +198,7 @@ input[type=number]{-moz-appearance:textfield}
 
 <div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">
   <span onclick="toggleVersionHistory()" style="cursor:pointer;color:var(--primary)" title="Click for version history"><strong>v1.05</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Auto-sync 4x daily · FIFA API + LiveScore + Football-data.org · Shots, cards, fouls, late goals, H2H, goal splits
-  <div id="versionHistory" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem;max-width:500px;width:90%;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:left;line-height:1.7;font-size:.75rem"></div>
+  <div id="versionHistory" style="display:none;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border);text-align:center;line-height:1.8;font-size:.75rem"></div>
 </div>
 
 <script>
@@ -941,23 +941,15 @@ function clearHistory(){if(confirm('Clear all?')){setHist([]);renderHist()}}
 function populateVersionHistory(){
   const el=$('versionHistory');
   if(!el||!VERSION_HISTORY)return;
-  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)"><span style="font-weight:700;font-size:.85rem;color:var(--ink)">Version History</span><span onclick="toggleVersionHistory()" style="cursor:pointer;font-size:.9rem;color:var(--muted);line-height:1">✕</span></div>'+VERSION_HISTORY.slice().reverse().map(function(h){
-    return '<div style="display:flex;gap:.5rem;padding:.25rem 0"><span style="color:var(--primary);font-weight:600;white-space:nowrap">v'+h.v+'</span><span style="opacity:.5;min-width:3.5rem">'+h.date+'</span><span>'+h.msg+'</span></div>';
+  el.innerHTML=VERSION_HISTORY.slice().reverse().map(function(h){
+    return '<span style="display:inline-block;padding:.2rem .5rem;margin:.15rem"><span style="color:var(--primary);font-weight:600">v'+h.v+'</span> <span style="opacity:.5">'+h.date+'</span> — '+h.msg+'</span><br>';
   }).join('');
 }
 function toggleVersionHistory(){
   const el=$('versionHistory');
   if(!el)return;
   if(!el.children.length)populateVersionHistory();
-  const shown=el.style.display==='flex';
-  el.style.display=shown?'none':'flex';
-  if(!shown)setTimeout(()=>document.addEventListener('click',closeVH),10);
-  else document.removeEventListener('click',closeVH);
-}
-function closeVH(e){
-  const el=$('versionHistory');
-  if(!el||el.style.display!=='flex')return;
-  if(!el.contains(e.target)){el.style.display='none';document.removeEventListener('click',closeVH)}
+  el.style.display=el.style.display==='none'?'block':'none';
 }
 function toggleTheme(){
   const d=document.documentElement;
