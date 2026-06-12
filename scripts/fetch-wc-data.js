@@ -1,7 +1,7 @@
 import {readFileSync,writeFileSync} from 'fs';
 import {getAllMatches,toOurName} from './sources/fifa-api.js';
 import * as footballData from './sources/football-data.js';
-import {getAvailableMatches as lsGetMatches,getMatchStats,extractLiveStats,toOurName as lsToOurName} from './sources/livescore.js';
+import {getAvailableMatches as lsGetMatches,getMatchStats,getMatchIncidents,getMatchH2h,extractLiveStats,toOurName as lsToOurName} from './sources/livescore.js';
 import {TEAM_NAMES} from './team-mapping.js';
 
 const PATH=process.argv[2]||'index.html';
@@ -17,7 +17,8 @@ function emptyData(){return{
   wcRestDays:0,wcH2h:null,wcFormation:0,
   wcShotsOnTarget:0,wcShotsOffTarget:0,wcBlockedShots:0,
   wcCorners:0,wcYellowCards:0,wcRedCards:0,
-  wcShotsConcededTarget:0,wcShotsConcededOffTarget:0
+  wcShotsConcededTarget:0,wcShotsConcededOffTarget:0,
+  wcFirstHalfGoals:0,wcSecondHalfGoals:0,wcLateGoals:0
 }}
 
 function emptyDataObj(){const o={};for(const t of TEAM_NAMES)o[t]=emptyData();return o}
@@ -37,7 +38,7 @@ function buildLiveDataJs(liveData){
   const teams=Object.keys(liveData).sort();
   const lines=teams.map(t=>{
     const d=liveData[t];
-    return `  "${t}":{wcForm:"${d.wcForm||''}",wcGs:${d.wcGs??0},wcGc:${d.wcGc??0},wcWr:${d.wcWr??0},wcAh:${d.wcAh??0},wcMatches:${d.wcMatches??0},wcCards:${d.wcCards??0},wcReds:${d.wcReds??0},wcPossession:${d.wcPossession??0},wcShots:${d.wcShots??0},wcShotsConceded:${d.wcShotsConceded??0},wcGkSaves:${d.wcGkSaves??0},wcFouls:${d.wcFouls??0},wcOffsides:${d.wcOffsides??0},wcPensAwarded:${d.wcPensAwarded??0},wcLateGoals:${d.wcLateGoals??0},wcCleanSheets:${d.wcCleanSheets??0},wcRestDays:${d.wcRestDays??0},wcH2h:${JSON.stringify(d.wcH2h)||'null'},wcFormation:${d.wcFormation??0},wcShotsOnTarget:${d.wcShotsOnTarget??0},wcShotsOffTarget:${d.wcShotsOffTarget??0},wcBlockedShots:${d.wcBlockedShots??0},wcCorners:${d.wcCorners??0},wcYellowCards:${d.wcYellowCards??0},wcRedCards:${d.wcRedCards??0},wcShotsConcededTarget:${d.wcShotsConcededTarget??0},wcShotsConcededOffTarget:${d.wcShotsConcededOffTarget??0}}`;
+    return `  "${t}":{wcForm:"${d.wcForm||''}",wcGs:${d.wcGs??0},wcGc:${d.wcGc??0},wcWr:${d.wcWr??0},wcAh:${d.wcAh??0},wcMatches:${d.wcMatches??0},wcCards:${d.wcCards??0},wcReds:${d.wcReds??0},wcPossession:${d.wcPossession??0},wcShots:${d.wcShots??0},wcShotsConceded:${d.wcShotsConceded??0},wcGkSaves:${d.wcGkSaves??0},wcFouls:${d.wcFouls??0},wcOffsides:${d.wcOffsides??0},wcPensAwarded:${d.wcPensAwarded??0},wcLateGoals:${d.wcLateGoals??0},wcCleanSheets:${d.wcCleanSheets??0},wcRestDays:${d.wcRestDays??0},wcH2h:${JSON.stringify(d.wcH2h)||'null'},wcFormation:${d.wcFormation??0},wcShotsOnTarget:${d.wcShotsOnTarget??0},wcShotsOffTarget:${d.wcShotsOffTarget??0},wcBlockedShots:${d.wcBlockedShots??0},wcCorners:${d.wcCorners??0},wcYellowCards:${d.wcYellowCards??0},wcRedCards:${d.wcRedCards??0},wcShotsConcededTarget:${d.wcShotsConcededTarget??0},wcShotsConcededOffTarget:${d.wcShotsConcededOffTarget??0},wcFirstHalfGoals:${d.wcFirstHalfGoals??0},wcSecondHalfGoals:${d.wcSecondHalfGoals??0},wcLateGoals:${d.wcLateGoals??0}}`;
   });
   return 'const LIVE_DATA = {\n'+lines.join(',\n')+'\n};';
 }
@@ -160,7 +161,6 @@ async function main(){
         if(!liveData[team])continue;
         const d=liveData[team];
         const isHome=team===home;
-        // Add stats per match (with guards)
         if(stats.shotsOnTarget)d.wcShotsOnTarget+=isHome?stats.shotsOnTarget.home:stats.shotsOnTarget.away;
         if(stats.shotsOffTarget)d.wcShotsOffTarget+=isHome?stats.shotsOffTarget.home:stats.shotsOffTarget.away;
         if(stats.blockedShots)d.wcBlockedShots+=isHome?stats.blockedShots.home:stats.blockedShots.away;
@@ -170,15 +170,40 @@ async function main(){
         if(stats.yellowCards)d.wcYellowCards+=isHome?stats.yellowCards.home:stats.yellowCards.away;
         if(stats.redCards)d.wcRedCards+=isHome?stats.redCards.home:stats.redCards.away;
         if(stats.goalkeeperSaves)d.wcGkSaves+=isHome?stats.goalkeeperSaves.home:stats.goalkeeperSaves.away;
-        // Shots conceded = opponent's shots
         if(stats.shotsOnTarget)d.wcShotsConcededTarget+=isHome?stats.shotsOnTarget.away:stats.shotsOnTarget.home;
         if(stats.shotsOffTarget)d.wcShotsConcededOffTarget+=isHome?stats.shotsOffTarget.away:stats.shotsOffTarget.home;
-        // Possession from LiveScore
         if(stats.possession){
           const pct=isHome?stats.possession.home:stats.possession.away;
           if(pct>0&&!isNaN(pct)){
             d.wcPossession=d.wcMatches>0?((d.wcPossession*(d.wcMatches-1)+pct)/d.wcMatches):pct;
           }
+        }
+      }
+
+      // Fetch goal incidents (timestamps, late goals, half splits)
+      const incidents=await getMatchIncidents(lm.eventId,lm.homeName,lm.awayName);
+      if(incidents){
+        for(const team of[home,away]){
+          if(!liveData[team])continue;
+          const d=liveData[team];
+          const isHome=team===home;
+          const side=isHome?'home':'away';
+          d.wcFirstHalfGoals+=incidents.firstHalfGoals[side];
+          d.wcSecondHalfGoals+=incidents.secondHalfGoals[side];
+          d.wcLateGoals+=incidents.lateGoals[side];
+        }
+      }
+
+      // Fetch H2H data (past meetings between these teams)
+      const h2hData=await getMatchH2h(lm.eventId,lm.homeName,lm.awayName);
+      if(h2hData?.h2h){
+        for(const team of[home,away]){
+          if(!liveData[team])continue;
+          const d=liveData[team];
+          // Store H2H record against this specific opponent
+          const opp=team===home?away:home;
+          if(!d.wcH2h)d.wcH2h={};
+          if(!d.wcH2h[opp])d.wcH2h[opp]=h2hData.h2h;
         }
       }
     }

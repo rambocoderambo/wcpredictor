@@ -99,3 +99,142 @@ export function extractLiveStats(rawStats){
   }
   return out;
 }
+
+function getNextData(html){
+  const m=html.match(/__NEXT_DATA__"[^>]*>({.+?})<\/script>/);
+  return m?JSON.parse(m[1]):null;
+}
+
+function parseMinute(str){
+  if(!str)return 999;
+  const m=str.match(/(\d+)/);
+  return m?parseInt(m[1]):999;
+}
+
+export async function getMatchIncidents(eventId,homeName,awayName){
+  const slugHome=homeName.toLowerCase().replace(/\s+/g,'-');
+  const slugAway=awayName.toLowerCase().replace(/\s+/g,'-');
+  const url=BASE+'/'+slugHome+'-vs-'+slugAway+'/'+eventId+'/';
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    const html=await r.text();
+    const data=getNextData(html);
+    if(!data)return null;
+    const event=data?.props?.pageProps?.initialEventData?.event;
+    if(!event?.incidents?.incs)return null;
+
+    const goals={home:[],away:[]};
+    const cards={home:{yellow:0,red:0},away:{yellow:0,red:0}};
+    const totalShots={home:0,away:0};
+
+    for(const[half,minutes] of Object.entries(event.incidents.incs)){
+      for(const[min,entries] of Object.entries(minutes)){
+        for(const entry of(Array.isArray(entries)?entries:[entries])){
+          for(const side of['HOME','AWAY']){
+            for(const e of(entry[side]||[])){
+              const tSide=side==='HOME'?'home':'away';
+              const minNum=parseMinute(e.time);
+              if(e.type==='FootballGoal'){
+                goals[tSide].push(minNum);
+              }else if(e.type==='FootballYellowCard'){
+                cards[tSide].yellow++;
+              }else if(e.type==='FootballRedCard'){
+                cards[tSide].red++;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // scores by period
+    const periods=event.scores?.scoresByPeriod||[];
+    const htScore={home:parseInt(periods[0]?.home?.score)||0,away:parseInt(periods[0]?.away?.score)||0};
+    const ftScore={home:parseInt(periods[1]?.home?.score)||0,away:parseInt(periods[1]?.away?.score)||0};
+
+    return{
+      goals,
+      cards,
+      htScore,
+      ftScore,
+      lateGoals:{home:goals.home.filter(m=>m>=75).length,away:goals.away.filter(m=>m>=75).length},
+      firstHalfGoals:{home:goals.home.filter(m=>m<=45).length,away:goals.away.filter(m=>m<=45).length},
+      secondHalfGoals:{home:goals.home.filter(m=>m>45&&m<=90).length,away:goals.away.filter(m=>m>45&&m<=90).length}
+    };
+  }catch{return null}
+}
+
+export async function getMatchH2h(eventId,homeName,awayName){
+  const slugHome=homeName.toLowerCase().replace(/\s+/g,'-');
+  const slugAway=awayName.toLowerCase().replace(/\s+/g,'-');
+  const url=BASE+'/'+slugHome+'-vs-'+slugAway+'/'+eventId+'/h2h/';
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    const html=await r.text();
+    const data=getNextData(html);
+    if(!data)return null;
+    const pp=data.props.pageProps;
+
+    // Find H2H data (might be in headToHead, initialHeadToHeadData, or event.headToHead)
+    let h2hData=pp.initialHeadToHeadData||pp.headToHead;
+    if(!h2hData){
+      const ed=pp.initialEventData?.event;
+      if(ed?.headToHead)h2hData=ed.headToHead;
+    }
+    if(!h2hData)return null;
+
+    // Parse H2H matches
+    const histMatches=[];
+    const groups=h2hData.h2h||[];
+    for(const grp of groups){
+      for(const ev of(grp.events||[])){
+        if(ev.homeName&&ev.awayName){
+          histMatches.push({
+            home:ev.homeName,away:ev.awayName,
+            homeScore:ev.homeScore!==''?parseInt(ev.homeScore):null,
+            awayScore:ev.awayScore!==''?parseInt(ev.awayScore):null,
+            winner:ev.winner||'',
+            date:ev.startDateTimeString||''
+          });
+        }
+      }
+    }
+
+    // Calculate H2H record
+    const ourHome=homeName,ourAway=awayName;
+    let wins=0,losses=0,draws=0;
+    for(const me of histMatches){
+      const isHome=me.home===ourHome;
+      const ourScore=isHome?me.homeScore:me.awayScore;
+      const oppScore=isHome?me.awayScore:me.homeScore;
+      if(ourScore===null||oppScore===null)continue;
+      if(ourScore>oppScore)wins++;
+      else if(ourScore<oppScore)losses++;
+      else draws++;
+    }
+
+    // Recent matches for each team (from home/away arrays)
+    const recentHome=[],recentAway=[];
+    for(const grp of(h2hData.home||[])){
+      for(const ev of(grp.events||[])){
+        if(ev.homeName&&ev.awayName&&ev.homeScore!==''&&ev.awayScore!==''){
+          recentHome.push({opponent:ev.awayName,for:parseInt(ev.homeScore),against:parseInt(ev.awayScore),date:ev.startDateTimeString});
+        }
+      }
+    }
+    for(const grp of(h2hData.away||[])){
+      for(const ev of(grp.events||[])){
+        if(ev.homeName&&ev.awayName&&ev.homeScore!==''&&ev.awayScore!==''){
+          recentAway.push({opponent:ev.homeName,for:parseInt(ev.awayScore),against:parseInt(ev.homeScore),date:ev.startDateTimeString});
+        }
+      }
+    }
+
+    return {
+      h2h:{wins,losses,draws,total:wins+losses+draws},
+      recentMatches:[...recentHome.slice(-10),...recentAway.slice(-10)]
+    };
+  }catch{return null}
+}
