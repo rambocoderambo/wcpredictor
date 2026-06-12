@@ -215,7 +215,7 @@ input[type=number]{-moz-appearance:textfield}
 </div>
 
 <div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">
-  <span onclick="toggleVersionHistory()" style="cursor:pointer;color:var(--primary)" title="Click for version history"><strong>v1.05</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Auto-sync 4x daily · FIFA API + LiveScore + Football-data.org · Shots, cards, fouls, late goals, H2H, goal splits
+  <span onclick="toggleVersionHistory()" style="cursor:pointer;color:var(--primary)" title="Click for version history"><strong>v1.06</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Auto-sync 4x daily · FIFA API + LiveScore + Football-data.org · Shots, cards, fouls, late goals, H2H, goal splits
   <div id="versionHistory" style="display:none;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border);text-align:center;line-height:1.8;font-size:.75rem"></div>
 </div>
 
@@ -315,7 +315,7 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 // Championship title probabilities (Kimi Ch.8)
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
-const VERSION = "1.05";
+const VERSION = "1.06";
 const INJURIES_LIVE = {
  "Brazil": [
   {
@@ -590,7 +590,8 @@ const VERSION_HISTORY = [
   {v:"1.01",date:"Jun 12",msg:"Rambo Action launch: FIFA API auto-sync, Football-data.org fallback, dedup"},
   {v:"1.03",date:"Jun 12",msg:"Live match data: 4 team-matches processed"},
   {v:"1.04",date:"Jun 12",msg:"Goal timestamps, late goals, H2H history, group standings"},
-  {v:"1.05",date:"Jun 12",msg:"Non-linear scoring: matchup, motivation, fatigue + ESPN injuries"}
+  {v:"1.05",date:"Jun 12",msg:"Non-linear scoring: matchup, motivation, fatigue + ESPN injuries"},
+  {v:"1.06",date:"Jun 12",msg:"Team comparison view, visual stat bars, color-coded injuries, accuracy tracking, export v1.06"}
 ];
 const LAST_SYNC = "Jun 12, 07:00 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true};
