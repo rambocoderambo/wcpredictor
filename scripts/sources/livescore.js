@@ -100,6 +100,30 @@ export function extractLiveStats(rawStats){
   return out;
 }
 
+export async function getGroupStandings(){
+  try{
+    const r=await fetch(BASE+'/');
+    const html=await r.text();
+    const data=getNextData(html);
+    if(!data)return{};
+    const league=data?.props?.pageProps?.initialData?.tables?.league;
+    if(!league)return{};
+    const standings={};
+    for(const[,groupData] of Object.entries(league)){
+      for(const table of(groupData||[])){
+        for(const team of(table.teams||[])){
+          standings[team.name]={
+            rank:team.rank,played:team.played,points:team.points,
+            wins:team.wins,draws:team.draws,losses:team.losses,
+            goalsFor:team.goalsFor,goalsAgainst:team.goalsAgainst,goalsDiff:team.goalsDiff
+          };
+        }
+      }
+    }
+    return standings;
+  }catch{return{}}
+}
+
 function getNextData(html){
   const m=html.match(/__NEXT_DATA__"[^>]*>({.+?})<\/script>/);
   return m?JSON.parse(m[1]):null;

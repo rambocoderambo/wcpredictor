@@ -299,11 +299,57 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
 const VERSION = "1.04";
+const STANDINGS = {
+ "Mexico": {
+  "rank": 1,
+  "played": 1,
+  "points": 3,
+  "wins": 1,
+  "draws": 0,
+  "losses": 0,
+  "goalsFor": 2,
+  "goalsAgainst": 0,
+  "goalsDiff": 2
+ },
+ "South Korea": {
+  "rank": 2,
+  "played": 1,
+  "points": 3,
+  "wins": 1,
+  "draws": 0,
+  "losses": 0,
+  "goalsFor": 2,
+  "goalsAgainst": 1,
+  "goalsDiff": 1
+ },
+ "Czechia": {
+  "rank": 3,
+  "played": 1,
+  "points": 0,
+  "wins": 0,
+  "draws": 0,
+  "losses": 1,
+  "goalsFor": 1,
+  "goalsAgainst": 2,
+  "goalsDiff": -1
+ },
+ "South Africa": {
+  "rank": 4,
+  "played": 1,
+  "points": 0,
+  "wins": 0,
+  "draws": 0,
+  "losses": 1,
+  "goalsFor": 0,
+  "goalsAgainst": 2,
+  "goalsDiff": -2
+ }
+};
 const VERSION_HISTORY = [
   {v:"1.02",date:"Jun 12",msg:"LiveScore scraping: shots, cards, fouls, corners, GK saves — all match stats live"},
   {v:"1.01",date:"Jun 12",msg:"Rambo Action launch: FIFA API auto-sync, Football-data.org fallback, dedup"}
 ],{v:"1.03",date:"Jun 12",msg:"Live match data: 4 team-matches processed"}
-const LAST_SYNC = "Jun 12, 05:07 PM";
+const LAST_SYNC = "Jun 12, 05:25 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true};
 const WC_PROCESSED = {"400021441":true,"400021443":true};
 
@@ -534,7 +580,7 @@ function lateScore(team){
 // Kimi match prediction lookup — returns {home, draw, away} probabilities
 function getMatchPred(teamA,teamB){
   const key1=teamA+' vs '+teamB,key2=teamB+' vs '+teamA;
-  const p=MATCH_PRED[key1]||MATCH_PRED[key2],{v:"1.04",date:"Jun 12",msg:"Live match data: 4 team-matches processed"}
+  const p=MATCH_PRED[key1]||MATCH_PRED[key2];
   if(p)return p[0]/100;
   return null;
 }
@@ -631,6 +677,14 @@ function ctxScore(teamA,teamB){
   if(a.cards>2)s-=.05;if(b.cards>2)s+=.03;
   // Form comparison
   s+=clamp((formScore(teamA)-formScore(teamB))*.15,-.1,.1);
+  // Group standing motivation boost (teams that need to win)
+  const stA=STANDINGS[teamA],stB=STANDINGS[teamB];
+  if(stA&&stB&&stA.played>0&&stB.played>0){
+    const ptDiff=stA.points-stB.points;
+    // Team trailing by 3+ pts needs win more — small boost
+    if(ptDiff<=-3)s+=.02;
+    if(ptDiff>=3)s-=.02;
+  }
   return clamp(s,0,1);
 }
 

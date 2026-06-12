@@ -1,7 +1,7 @@
 import {readFileSync,writeFileSync} from 'fs';
 import {getAllMatches,toOurName} from './sources/fifa-api.js';
 import * as footballData from './sources/football-data.js';
-import {getAvailableMatches as lsGetMatches,getMatchStats,getMatchIncidents,getMatchH2h,extractLiveStats,toOurName as lsToOurName} from './sources/livescore.js';
+import {getAvailableMatches as lsGetMatches,getMatchStats,getMatchIncidents,getMatchH2h,getGroupStandings,extractLiveStats,toOurName as lsToOurName} from './sources/livescore.js';
 import {TEAM_NAMES} from './team-mapping.js';
 
 const PATH=process.argv[2]||'index.html';
@@ -215,6 +215,16 @@ async function main(){
   }catch(e){
     console.warn('LiveScore scrape failed:',e.message);
   }
+
+  // Fetch group standings
+  try{
+    const standings=await getGroupStandings();
+    if(Object.keys(standings).length){
+      const standStr=JSON.stringify(standings,null,1);
+      html=html.replace(/const STANDINGS = \{[\s\S]*?\};/,'const STANDINGS = '+standStr+';')||
+        (html=html.replace('const VERSION','const STANDINGS = {};\nconst VERSION'));
+    }
+  }catch(e){console.warn('Standings fetch failed:',e.message)}
 
   // Write updated LIVE_DATA
   const newBlock=buildLiveDataJs(liveData);
