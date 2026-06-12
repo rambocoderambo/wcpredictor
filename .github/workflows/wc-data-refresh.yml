@@ -14,6 +14,8 @@ jobs:
           node-version: 20
       - name: Fetch live WC data
         run: node scripts/fetch-wc-data.js
+        env:
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
       - name: Commit and push
         run: |
           git config user.name "rambo-bot"

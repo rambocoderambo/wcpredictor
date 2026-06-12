@@ -1,5 +1,6 @@
 import {readFileSync,writeFileSync} from 'fs';
 import {getAllMatches,toOurName} from './sources/fifa-api.js';
+import * as footballData from './sources/football-data.js';
 import {TEAM_NAMES} from './team-mapping.js';
 
 const PATH=process.argv[2]||'index.html';
@@ -43,15 +44,38 @@ async function main(){
   try{html=readHtml()}catch(e){console.error('Cannot read index.html');process.exit(1)}
   const liveData=parseLiveData(html);
 
-  // Fetch all 104 WC 2026 matches from FIFA API
+  // Init Football-data.org fallback with env key
+  const fdKey=process.env.FOOTBALL_DATA_KEY;
+  if(fdKey)footballData.init(fdKey);
+
+  // Fetch all 104 WC 2026 matches from FIFA API (primary)
   let matches;
   try{
     matches=await getAllMatches();
     console.log('FIFA API: '+matches.length+' matches loaded');
   }catch(e){
-    console.error('FIFA API failed:',e.message);
-    console.log('No data update this run');
-    process.exit(1);
+    console.warn('FIFA API failed:',e.message);
+    matches=[];
+    // Fallback: try Football-data.org for today's matches
+    if(fdKey){
+      try{
+        const today=new Date().toISOString().slice(0,10);
+        const yesterday=new Date(Date.now()-864e5).toISOString().slice(0,10);
+        const fdMatches=await footballData.getMatches(yesterday,today);
+        console.log('Football-data.org fallback: '+fdMatches.length+' matches');
+        matches=fdMatches.map(m=>({
+          id:m.date,date:m.date,
+          home:toOurName(m.home)||m.home,
+          away:toOurName(m.away)||m.away,
+          homeScore:m.homeScore,awayScore:m.awayScore,
+          status:m.homeScore!==null?0:1,
+          stage:'',group:'',stadium:'',city:'',
+          attendance:0,possessionHome:null,possessionAway:null,
+          tacticsHome:'',tacticsAway:'',winner:null
+        }));
+      }catch(fde){console.warn('Football-data.org also failed:',fde.message)}
+    }
+    if(!matches.length){console.log('No data update this run');process.exit(1)}
   }
 
   // Parse already-processed match IDs
@@ -124,7 +148,10 @@ async function main(){
     const raw=parseFloat(vMatch[1]);
     const next=(raw+0.01).toFixed(2);
     html=html.replace(/const VERSION = "[\d.]+"/,'const VERSION = "'+next+'"');
-    html=html.replace(/<strong>v[\d.]+<\/strong> — /,'<strong>v'+next+'</strong> — ');
+    html=html.replace(
+      /<strong>v[\d.]+<\/strong> — Rambo Action · Auto-sync 6PM\/12AM GMT\+8 · FIFA API \+ Football-data\.org · Match scores, possession &amp; form updated live/,
+      '<strong>v'+next+'</strong> — Rambo Action · Auto-sync 6PM/12AM GMT+8 · FIFA API + Football-data.org · Match scores, possession &amp; form updated live'
+    );
     verStr=next;
   }
 
