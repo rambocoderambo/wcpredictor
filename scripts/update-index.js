@@ -49,12 +49,12 @@ export function updateLiveData(html,liveData){
 
 export function updateVersionFooter(html){
   const v=getVersion(html);
-  const footer='<div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">v'+v+' · Data refreshes 6:00/12:00 UTC · Live API sources: API-Football + Sofascore + Football-data.org</div>';
+  const footer='<div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">v'+v+' · Data refreshes 6:00/12:00 UTC · API-Football + Sofascore + Football-data.org</div>';
   const footerRe=/<div style="margin-top:1\.5rem;padding-top:\.75rem;border-top:1px solid var\(--border\);font-size:\.65rem;color:var\(--muted\);text-align:center">.*?<\/div>/;
   if(footerRe.test(html)){
     html=html.replace(footerRe,footer);
   }else{
-    html=html.replace('</body>',footer+'\n</body>');
+    html=html.replace('</div>\n\n<script>',footer+'\n\n<script>');
   }
   return html;
 }
