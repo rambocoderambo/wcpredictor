@@ -98,9 +98,10 @@ input[type=number]{-moz-appearance:textfield}
     <div class="sub">Asian handicap analysis &amp; prediction engine based off</div>
     <div class="sub"><a href="https://x.com/Kimi_Moonshot/status/2064311212243120459" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi to predict all 104 World Cup matches</a>.</div>
     <div class="sub"><a href="https://gtfehbkpbwzco.kimi.page" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi's Agent Swarm coordinates 300 sub-agents to reason in parallel</a> · 277-page report</div>
+    <div id="syncBar" style="display:none;margin-top:.6rem;padding:.35rem .6rem;background:var(--primary);color:#131818;border-radius:6px;font-size:.7rem;font-weight:600;align-items:center;gap:.4rem">
+      <span>⏱</span><span style="font-weight:400;opacity:.7">Rambo Action · </span><span id="syncText">Last sync: —</span>
+    </div>
   </div>
-
-
 
   <div class="section">
     <div class="card">
@@ -197,7 +198,7 @@ input[type=number]{-moz-appearance:textfield}
 </div>
 
 <div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">
-  <strong>v1.1</strong> — Live WC data: attack/defense/discipline/late-goals scoring · 15 dimensions · GitHub Action auto-refresh 6PM/12AM GMT+8 · API-Football + Sofascore + Football-data.org
+  <strong>v1.1</strong> — Live WC data: attack/defense/discipline/late-goals scoring · 15 dimensions · Rambo Action auto-refresh 6PM/12AM GMT+8 · API-Football + Sofascore + Football-data.org
 </div>
 
 <script>
@@ -297,6 +298,7 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
 const VERSION = "1.1";
+const LAST_SYNC = "—";
 
 const LIVE_DATA = {};
 
@@ -910,6 +912,9 @@ function init(){
   document.querySelectorAll('input').forEach(el=>{
     el.addEventListener('keydown',e=>{if(e.key==='Enter')analyze()});
   });
+  if(LAST_SYNC&&LAST_SYNC!=='—'){
+    const sb=$('syncBar');if(sb){sb.style.display='flex';$('syncText').textContent='Last sync: '+LAST_SYNC}
+  }
 }
 init();
 </script>

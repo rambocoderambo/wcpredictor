@@ -49,7 +49,7 @@ export function updateLiveData(html,liveData){
 
 export function updateVersionFooter(html){
   const v=getVersion(html);
-  const footer='<div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">\n  <strong>v'+v+'</strong> — Live WC data: attack/defense/discipline/late-goals scoring · 15 dimensions · GitHub Action auto-refresh 6PM/12AM GMT+8 · API-Football + Sofascore + Football-data.org\n</div>';
+  const footer='<div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">\n  <strong>v'+v+'</strong> — Live WC data: attack/defense/discipline/late-goals scoring · 15 dimensions · Rambo Action auto-refresh 6PM/12AM GMT+8 · API-Football + Sofascore + Football-data.org\n</div>';
   const footerRe=/<div style="margin-top:1\.5rem;padding-top:\.75rem;border-top:1px solid var\(--border\);font-size:\.65rem;color:var\(--muted\);text-align:center">.*?<\/div>/;
   if(footerRe.test(html)){
     html=html.replace(footerRe,footer);
@@ -64,6 +64,10 @@ export function setLiveData(liveData){
   html=bumpVersion(html);
   html=updateLiveData(html,liveData);
   html=updateVersionFooter(html);
+  const now=new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Singapore'});
+  const syncRe=/const LAST_SYNC = "[^"]*"/;
+  if(syncRe.test(html)){html=html.replace(syncRe,'const LAST_SYNC = "'+now+'"')}
+  else{html=html.replace('const VERSION','const LAST_SYNC = "'+now+'";\nconst VERSION')}
   writeIndex(html);
-  console.log('Updated LIVE_DATA, version '+getVersion(html));
+  console.log('Updated LIVE_DATA, version '+getVersion(html)+', sync '+now);
 }

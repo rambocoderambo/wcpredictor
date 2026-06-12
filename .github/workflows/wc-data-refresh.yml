@@ -1,4 +1,4 @@
-name: WC Data Refresh
+name: Rambo Action
 on:
   schedule:
     - cron: '0 10,16 * * *'
