@@ -292,6 +292,10 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 // Championship title probabilities (Kimi Ch.8)
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
+const VERSION = "1.00";
+
+const LIVE_DATA = {};
+
 const TEAM_DATA = {
   "Mexico":{g:"A",p:82,elo:1770,fifaRank:15,wr:.58,gs:1.5,gc:.9,ah:.5,qual:"82%",injuries:"Jimenez fit at 35. Alvarez captain.",cards:1.9,reds:0,form:"W-D-W-L-D",np:"Host. All 3 matches Azteca (2,240m). Shortest travel (5,163km). Always R16."},
   "South Korea":{g:"A",p:67,elo:1805,fifaRank:25,wr:.67,gs:1.7,gc:.7,ah:.55,qual:"67%",injuries:"Son Heung-min 33. Kim Min-jae, Lee Kang-in fit.",cards:1.7,reds:1,form:"W-W-D-W-D",np:"Beat Portugal 2022. Over-reliant on Son."},
@@ -344,10 +348,68 @@ const TEAM_DATA = {
 };
 
 // ===== UTILITY =====
-function gt(name){return TEAM_DATA[name]}
+function gt(name){
+  const t=TEAM_DATA[name],l=LIVE_DATA[name]||{};
+  if(!t)return null;
+  const merged={...t,
+    form:l.wcForm||t.form,
+    gs:l.wcGs!==undefined?l.wcGs:t.gs,
+    gc:l.wcGc!==undefined?l.wcGc:t.gc,
+    wr:l.wcWr!==undefined?l.wcWr:t.wr,
+    ah:l.wcAh!==undefined?l.wcAh:t.ah,
+    cards:l.wcCards!==undefined?l.wcCards:t.cards,
+    reds:l.wcReds!==undefined?l.wcReds:t.reds,
+    possession:l.wcPossession||0,shots:l.wcShots||0,
+    shotsConceded:l.wcShotsConceded||0,gkSaves:l.wcGkSaves||0,
+    fouls:l.wcFouls||0,offsides:l.wcOffsides||0,
+    pensAwarded:l.wcPensAwarded||0,lateGoals:l.wcLateGoals||0,
+    cleanSheets:l.wcCleanSheets||0,wcMatches:l.wcMatches||0,
+    h2h:l.wcH2h||null,formationStability:l.wcFormation||null
+  };
+  return merged;
+}
 function imp(odds){return 1/odds}
 function ev(w,odds){return w*odds-1}
 function clamp(v,m,M){return Math.max(m,Math.min(M,v))}
+
+function attackScore(team){
+  const d=gt(team);if(!d)return.5;
+  let s=.5;
+  if(d.wcMatches>0){
+    const shotEff=d.wcShots>0?d.gs/d.wcShots:0;s+=clamp(shotEff*5,0,.15);
+    const poss=d.possession;s+=clamp((poss-45)/100,0,.1);
+    if(d.pensAwarded>0)s+=clamp(d.pensAwarded/d.wcMatches*.1,0,.05);
+  }
+  return clamp(s,0,1);
+}
+function defScore(team){
+  const d=gt(team);if(!d)return.5;
+  let s=.5;
+  if(d.wcMatches>0){
+    const shotsConcPerG=d.wcShotsConceded/d.wcMatches;s-=clamp(shotsConcPerG/30,0,.15);
+    const cleanPct=d.cleanSheets/d.wcMatches;s+=clamp(cleanPct*.3,0,.1);
+    const savesPerG=d.wcMatches>0?d.gkSaves/d.wcMatches:0;s+=clamp(savesPerG/10,0,.05);
+  }
+  return clamp(s,0,1);
+}
+function disciplineScore(team){
+  const d=gt(team);if(!d)return.5;
+  let s=.5;
+  if(d.wcMatches>0){
+    const ycPerG=d.cards/d.wcMatches;s-=clamp(ycPerG/3,0,.1);
+    if(d.reds>0)s-=clamp(d.reds/d.wcMatches*.15,0,.1);
+    const foulsPerG=d.fouls/d.wcMatches;s-=clamp((foulsPerG-10)/10,0,.05);
+  }
+  return clamp(s,0,1);
+}
+function lateScore(team){
+  const d=gt(team);if(!d)return.5;
+  let s=.5;
+  if(d.wcMatches>0&&d.gs>0){
+    const latePct=d.lateGoals/d.gs;s+=clamp(latePct*.5,0,.15);
+  }
+  return clamp(s,0,1);
+}
 
 // Kimi match prediction lookup — returns {home, draw, away} probabilities
 function getMatchPred(teamA,teamB){
@@ -499,13 +561,19 @@ function analyze(){
 function scoreBet(teamA,teamB,b,a,bd){
   const ip=imp(b.odds);
   const evV=ev(b.cover,b.odds);
+  const pickT=b.side==='home'?teamA:teamB;
+  const oppT=b.side==='home'?teamB:teamA;
   const fS=b.side==='home'?formScore(teamA):formScore(teamB);
   const cS=ctxScore(teamA,teamB);
   const oS=oddsScore(ip,b.cover);
-  const total=evV*.30+fS*.20+cS*.20+oS*.15;
+  const aS=attackScore(pickT);
+  const dS=defScore(pickT);
+  const discS=disciplineScore(pickT);
+  const lS=lateScore(pickT);
+
+  const total=evV*.25+fS*.10+aS*.15+dS*.15+discS*.10+cS*.10+lS*.10+oS*.05;
 
   // Market divergence bonus
-  const pickT=b.side==='home'?teamA:teamB;
   const div=DIVERGENCE[pickT]||0;
   const divBonus=Math.max(0,div/20);
 
@@ -518,7 +586,6 @@ function scoreBet(teamA,teamB,b,a,bd){
 
   const parts=[];
   const pickD=gt(pickT);
-  const oppT=b.side==='home'?teamB:teamA;
   const oppD=gt(oppT);
   const matchP=getMatchPred(teamA,teamB);
 
@@ -534,6 +601,8 @@ function scoreBet(teamA,teamB,b,a,bd){
   if(mgr)parts.push('Manager: '+mgr+'.');
   if(div!==0)parts.push('Market divergence for '+pickT+': '+(div>0?'+':'-')+Math.abs(div)+'pp (model vs market).');
   if(champAll>0)parts.push('Kimi title prob: '+champAll+'% (Table 8.1/8.2). Semi prob: '+(SEMI_PROB[pickT]||'n/a')+'%. QF prob: '+(QF_PROB[pickT]||'n/a')+'%.');
+  const lv=LIVE_DATA[pickT];
+  if(lv&&lv.wcMatches>0)parts.push('WC form: '+lv.wcForm+'. Possession '+lv.wcPossession.toFixed(0)+'%. Shots/g: '+((lv.wcShots/lv.wcMatches).toFixed(1))+'. Defense: '+(lv.wcCleanSheets/lv.wcMatches*100).toFixed(0)+'% clean sheets. Attack: '+(lv.wcGs/lv.wcMatches).toFixed(2)+' G/g.');
   const travelDist=TRAVEL[pickT]||TRAVEL[oppT];
   if(travelDist)parts.push('Travel burden: ~'+(travelDist/1000).toFixed(0)+'k km for '+pickT+'.');
   const inj=INJURY_MATRIX[pickT];
@@ -593,6 +662,7 @@ function renderResults(teamA,teamB,opts,best){
     <div class="reasoning">${best.reasoning}</div>
     <div style="margin-top:.75rem;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);padding:.5rem 0 0;line-height:1.5">
       <strong style="color:var(--muted)">Data Sources — Kimi 2026 WC Report</strong> (277pg · 114 tables · 300 agents)
+      + <strong style="color:var(--primary)">Live WC Data</strong> (v<script>document.write(VERSION)</script>)
       <span style="display:block;margin-top:.15rem">
         Elo Table 1.4 · Match predictions · Market divergence ·
         Injury Table 8.6 · Travel Ch.6.2 · Third-place Ch.4.13 ·
@@ -601,6 +671,9 @@ function renderResults(teamA,teamB,opts,best){
         Heat risk Ch.6.4 · Manager data · Polymarket · Streaks ·
         Title probs Tables 8.1-8.2 · Semi/QF Tables 8.4-8.5 ·
         Set-piece Table 5.2 · Champion history Table 9.9
+      </span>
+      <span style="display:block;margin-top:.15rem;color:var(--primary)">
+        Live: API-Football (fixtures/stats/injuries) · Sofascore (H2H) · Football-data.org (results)
       </span>
     </div>
   `;
@@ -836,5 +909,6 @@ function init(){
 }
 init();
 </script>
+<div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">v1.00 · Data refreshes 6:00/12:00 UTC · API-Football + Sofascore + Football-data.org</div>
 </body>
 </html>

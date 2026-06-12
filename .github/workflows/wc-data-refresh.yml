@@ -1,0 +1,28 @@
+name: WC Data Refresh
+on:
+  schedule:
+    - cron: '0 6,12 * * *'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Fetch live WC data
+        run: node scripts/fetch-wc-data.js
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          SOFASCORE_KEY1: ${{ secrets.SOFASCORE_KEY1 }}
+          SOFASCORE_KEY2: ${{ secrets.SOFASCORE_KEY2 }}
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
+      - name: Commit and push
+        run: |
+          git config user.name "wc-data-bot"
+          git config user.email "bot@wcpredictor"
+          git add index.html
+          git diff --quiet || git commit -m "auto: refresh data $(date +%Y-%m-%d)"
+          git push
