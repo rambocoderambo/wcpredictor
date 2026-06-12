@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8,7 +8,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:oklch(1 0 0);--surface:oklch(0.97 0.003 170);--ink:oklch(0.15 0.008 170);--primary:oklch(0.5 0.12 170);--primary-hover:oklch(0.45 0.12 170);--accent:oklch(0.55 0.15 35);--accent-hover:oklch(0.5 0.15 35);--muted:oklch(0.42 0.008 170);--border:oklch(0.88 0.005 170);--success:oklch(0.55 0.15 145);--error:oklch(0.55 0.2 25);--warning:oklch(0.65 0.15 85);--high-bg:oklch(0.92 0.04 145);--high-text:oklch(0.3 0.08 145);--med-bg:oklch(0.92 0.04 85);--med-text:oklch(0.35 0.08 85);--low-bg:oklch(0.92 0.04 25);--low-text:oklch(0.35 0.08 25);--font:system-ui,-apple-system,sans-serif;--mono:ui-monospace,'SF Mono',monospace}
-[data-theme="dark"]{--bg:oklch(0.07 0.005 170);--surface:oklch(0.13 0.015 170);--ink:oklch(0.88 0.005 170);--primary:oklch(0.62 0.12 170);--primary-hover:oklch(0.57 0.12 170);--accent:oklch(0.62 0.15 35);--accent-hover:oklch(0.57 0.15 35);--muted:oklch(0.5 0.005 170);--border:oklch(0.2 0.01 170);--success:oklch(0.6 0.15 145);--error:oklch(0.6 0.2 25);--warning:oklch(0.7 0.15 85);--high-bg:oklch(0.22 0.06 145);--high-text:oklch(0.7 0.08 145);--med-bg:oklch(0.22 0.06 85);--med-text:oklch(0.7 0.08 85);--low-bg:oklch(0.22 0.06 25);--low-text:oklch(0.7 0.08 25)}
+[data-theme="dark"]{--bg:oklch(0.20 0.008 197);--surface:oklch(0.25 0.013 196);--ink:#d9dfdf;--muted:#9aadad;--primary:oklch(0.62 0.12 197);--primary-hover:oklch(0.57 0.12 197);--accent:oklch(0.62 0.15 35);--accent-hover:oklch(0.57 0.15 35);--border:oklch(0.33 0.01 196);--success:oklch(0.6 0.15 145);--error:oklch(0.6 0.2 25);--warning:oklch(0.7 0.15 85);--high-bg:oklch(0.32 0.06 145);--high-text:oklch(0.7 0.08 145);--med-bg:oklch(0.32 0.06 85);--med-text:oklch(0.7 0.08 85);--low-bg:oklch(0.32 0.06 25);--low-text:oklch(0.7 0.08 25)}
 html{font-size:16px}
 body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
 .container{max-width:720px;margin:0 auto;padding:2rem 1.5rem}
@@ -25,10 +25,13 @@ select,input{font-family:var(--font);font-size:.875rem;padding:.5rem .75rem;bord
 select:focus,input:focus{border-color:var(--primary)}
 select:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 input[type=number]{font-family:var(--mono);text-align:center;width:100%}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
 .odds-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;align-items:center;margin-bottom:.5rem;padding:.5rem;border-radius:6px;transition:background .15s}
 .odds-row:hover{background:var(--surface)}
 .odds-row .label{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .odds-row .label span{display:block;font-weight:400;color:var(--muted);font-size:.7rem;text-transform:none;letter-spacing:0;margin-top:1px}
+#homeLabel,#awayLabel{color:#9aadad!important}
 .btn{font-family:var(--font);font-size:.875rem;font-weight:600;padding:.6rem 1.25rem;border-radius:6px;border:none;cursor:pointer;transition:background .15s,transform .05s;display:inline-flex;align-items:center;gap:.4rem;min-height:44px}
 .btn:active{transform:scale(.97)}
 .btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
@@ -97,6 +100,8 @@ input[type=number]{font-family:var(--mono);text-align:center;width:100%}
     <div class="sub"><a href="https://gtfehbkpbwzco.kimi.page" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi's Agent Swarm coordinates 300 sub-agents to reason in parallel</a> · 277-page report</div>
   </div>
 
+
+
   <div class="section">
     <div class="card">
       <div class="form-grid">
@@ -109,7 +114,7 @@ input[type=number]{font-family:var(--mono);text-align:center;width:100%}
       <div id="teamInfoB" class="team-info"></div>
 
       <div style="margin-bottom:.75rem;font-size:.8rem;color:var(--muted);padding:.5rem;background:var(--surface);border-radius:6px;border:1px solid var(--border);margin-bottom:.75rem">
-        Each handicap line has <strong>two prices</strong>: one for <strong>Team A (home)</strong> to cover, one for <strong>Team B (away)</strong> to cover. The engine evaluates all 6 bets.
+        For each handicap row, enter the home and away odds.<br>The engine scores all 6 bets (3 lines × 2 sides) and ranks them by value.
       </div>
       <div style="margin-bottom:.75rem">
         <div class="odds-row" style="padding:0 0 .25rem;margin-bottom:0;grid-template-columns:1fr 1.2fr 1.2fr">
@@ -698,6 +703,7 @@ function toggleTheme(){
     $('themeToggle').textContent='🌙';
   }
 }
+
 
 function exportPredictions(){
   const h=getHist();
