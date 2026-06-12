@@ -255,8 +255,8 @@ async function main(){
     const next=(raw+0.01).toFixed(2);
     html=html.replace(/const VERSION = "[\d.]+"/,'const VERSION = "'+next+'"');
     html=html.replace(
-      /<strong>v[\d.]+<\/strong> — /,
-      '<strong>v'+next+'</strong> — '
+      /<strong>v[\d.]+<\/strong><\/span> — /,
+      '<strong>v'+next+'</strong></span> — '
     );
     // Add version history entry
     const today=new Date().toLocaleString('en-US',{month:'short',day:'numeric',timeZone:'Asia/Singapore'});
