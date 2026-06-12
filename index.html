@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='oklch(0.5 0.12 170)'/><text x='16' y='22' text-anchor='middle' font-size='18' font-weight='bold' fill='white'>⚽</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='oklch(0.5 0.12 170)'/><text x='16' y='22' text-anchor='middle' font-size='18' font-weight='bold' fill='%23f0f0f0'>⚽</text></svg>">
 <title>WC Predictor – Asian Handicap Analysis</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:oklch(1 0 0);--surface:oklch(0.97 0.003 170);--ink:oklch(0.15 0.008 170);--primary:oklch(0.5 0.12 170);--primary-hover:oklch(0.45 0.12 170);--accent:oklch(0.55 0.15 35);--accent-hover:oklch(0.5 0.15 35);--muted:oklch(0.42 0.008 170);--border:oklch(0.88 0.005 170);--success:oklch(0.55 0.15 145);--error:oklch(0.55 0.2 25);--warning:oklch(0.65 0.15 85);--high-bg:oklch(0.92 0.04 145);--high-text:oklch(0.3 0.08 145);--med-bg:oklch(0.92 0.04 85);--med-text:oklch(0.35 0.08 85);--low-bg:oklch(0.92 0.04 25);--low-text:oklch(0.35 0.08 25);--font:system-ui,-apple-system,sans-serif;--mono:ui-monospace,'SF Mono',monospace}
+[data-theme="dark"]{--bg:oklch(0.07 0.005 170);--surface:oklch(0.13 0.015 170);--ink:oklch(0.88 0.005 170);--primary:oklch(0.62 0.12 170);--primary-hover:oklch(0.57 0.12 170);--accent:oklch(0.62 0.15 35);--accent-hover:oklch(0.57 0.15 35);--muted:oklch(0.5 0.005 170);--border:oklch(0.2 0.01 170);--success:oklch(0.6 0.15 145);--error:oklch(0.6 0.2 25);--warning:oklch(0.7 0.15 85);--high-bg:oklch(0.22 0.06 145);--high-text:oklch(0.7 0.08 145);--med-bg:oklch(0.22 0.06 85);--med-text:oklch(0.7 0.08 85);--low-bg:oklch(0.22 0.06 25);--low-text:oklch(0.7 0.08 25)}
 html{font-size:16px}
 body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
 .container{max-width:720px;margin:0 auto;padding:2rem 1.5rem}
 .header{margin-bottom:2.5rem}
-.header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem}
-.header h1 span{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--primary);align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700}
+.header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem;width:100%}
+.header h1 span{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--primary);align-items:center;justify-content:center;color:oklch(0.95 0 0);font-size:.75rem;font-weight:700}
 .header .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
 .section{margin-bottom:2rem}
 .section-title{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.75rem}
@@ -32,11 +33,11 @@ input[type=number]{font-family:var(--mono);text-align:center;width:100%}
 .btn:active{transform:scale(.97)}
 .btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important}}
-.btn-primary{background:var(--primary);color:#fff}
+.btn-primary{background:var(--primary);color:oklch(0.95 0 0)}
 .btn-primary:hover{background:var(--primary-hover)}
 .btn-ghost{background:transparent;color:var(--muted);padding:.4rem .75rem;font-size:.8rem}
 .btn-ghost:hover{color:var(--ink)}
-.btn-accent{background:var(--accent);color:#fff}
+.btn-accent{background:var(--accent);color:oklch(0.95 0 0)}
 .btn-accent:hover{background:var(--accent-hover)}
 .btn-danger{background:transparent;color:var(--error);padding:.4rem .75rem;font-size:.8rem;border:1px solid transparent}
 .btn-danger:hover{border-color:var(--error)}
@@ -44,7 +45,7 @@ input[type=number]{font-family:var(--mono);text-align:center;width:100%}
 .results{display:none;margin-top:1.5rem}
 .results.visible{display:block}
 .best-pick{background:var(--surface);border:2px solid var(--primary);border-radius:10px;padding:1.25rem;margin-bottom:1rem;position:relative}
-.best-pick .badge{position:absolute;top:-10px;left:1rem;background:var(--primary);color:#fff;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .6rem;border-radius:4px}
+.best-pick .badge{position:absolute;top:-10px;left:1rem;background:var(--primary);color:oklch(0.95 0 0);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .6rem;border-radius:4px}
 .best-pick .match{font-size:1.1rem;font-weight:700;margin-bottom:.25rem}
 .best-pick .pick{font-size:1.05rem;color:var(--primary);font-weight:600;margin-bottom:.25rem}
 .best-pick .pick strong{font-weight:700}
@@ -58,7 +59,7 @@ input[type=number]{font-family:var(--mono);text-align:center;width:100%}
 .options-table td{padding:.5rem;border-bottom:1px solid var(--border)}
 .options-table tr:last-child td{border-bottom:none}
 .options-table .num{font-family:var(--mono);text-align:right}
-.options-table .best{background:oklch(0.95 0.02 170);border-radius:4px}
+.options-table .best{background:var(--surface);border-radius:4px}
 .reasoning{margin-top:1rem;padding:.75rem;background:var(--surface);border-radius:6px;font-size:.825rem;color:var(--muted);line-height:1.6;border-left:3px solid var(--primary);white-space:pre-line}
 .reasoning strong{color:var(--ink)}
 .ti{cursor:help;font-size:.65rem;color:var(--muted);margin-left:1px}
@@ -90,7 +91,7 @@ input[type=number]{font-family:var(--mono);text-align:center;width:100%}
 
 <div class="container">
   <div class="header">
-    <h1><span style="background:none;border-radius:4px;overflow:hidden;padding:0;width:auto;height:auto"><img src="wc2026-logo.jpg" alt="WC" style="height:32px;width:32px;display:block;border-radius:4px"></span> WC Predictor</h1>
+    <h1><span style="background:none;border-radius:4px;overflow:hidden;padding:0;width:auto;height:auto"><img src="wc2026-logo.jpg" alt="WC" style="height:32px;width:32px;display:block;border-radius:4px"></span> WC Predictor <span onclick="toggleTheme()" style="cursor:pointer;font-size:.8rem;color:var(--muted);margin-left:auto" title="Toggle dark/light theme" id="themeToggle">🌙</span></h1>
     <div class="sub">Asian handicap analysis &amp; prediction engine based off</div>
     <div class="sub"><a href="https://x.com/Kimi_Moonshot/status/2064311212243120459" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi to predict all 104 World Cup matches</a>.</div>
     <div class="sub"><a href="https://gtfehbkpbwzco.kimi.page" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi's Agent Swarm coordinates 300 sub-agents to reason in parallel</a> · 277-page report</div>
@@ -160,7 +161,8 @@ input[type=number]{font-family:var(--mono);text-align:center;width:100%}
     <div class="card" id="historyContainer">
       <div class="empty" id="emptyHistory">No predictions yet. Enter a match above.</div>
     </div>
-    <div id="historyActions" style="display:none;margin-top:.5rem;gap:.4rem;justify-content:flex-end;flex-wrap:wrap">
+    <div id="historyActions" style="display:none;margin-top:.5rem;gap:.4rem;justify-content:flex-end;flex-wrap:wrap;align-items:center">
+      <span style="font-size:.65rem;color:var(--muted);margin-right:auto">Data stored in this browser only. Export to keep predictions across devices.</span>
       <button class="btn btn-ghost" onclick="exportPredictions()" style="font-size:.8rem">Export</button>
       <button class="btn btn-ghost" onclick="document.getElementById('importInput').click()" style="font-size:.8rem">Import</button>
       <button class="btn btn-danger" onclick="clearHistory()" style="font-size:.8rem">Clear All</button>
@@ -684,6 +686,19 @@ function setRes(id,r){const h=getHist(),i=h.find(x=>x.id===id);if(i){i.result=r;
 function delPred(id){setHist(getHist().filter(x=>x.id!==id));renderHist()}
 function clearHistory(){if(confirm('Clear all?')){setHist([]);renderHist()}}
 
+function toggleTheme(){
+  const d=document.documentElement;
+  if(d.getAttribute('data-theme')==='dark'){
+    d.removeAttribute('data-theme');
+    localStorage.setItem('wcTheme','light');
+    $('themeToggle').textContent='☀️';
+  } else {
+    d.setAttribute('data-theme','dark');
+    localStorage.setItem('wcTheme','dark');
+    $('themeToggle').textContent='🌙';
+  }
+}
+
 function exportPredictions(){
   const h=getHist();
   if(!h.length){alert('No predictions to export.');return}
@@ -788,6 +803,10 @@ function showTeamInfo(selId,infoId){
 
 // ===== INIT =====
 function init(){
+  // Theme
+  const saved=localStorage.getItem('wcTheme');
+  if(saved==='light'){document.documentElement.removeAttribute('data-theme');$('themeToggle').textContent='☀️'}
+  else{document.documentElement.setAttribute('data-theme','dark');$('themeToggle').textContent='🌙'}
   const gs=Object.keys(GROUPS);
   const fill=sel=>{
     const el=$(sel);
