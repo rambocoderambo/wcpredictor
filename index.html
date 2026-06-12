@@ -82,6 +82,14 @@ input[type=number]{-moz-appearance:textfield}
 .team-info .ti-row{display:flex;justify-content:space-between;padding:.2rem 0}
 .team-info .ti-label{color:var(--muted)}
 .team-info .ti-value{font-weight:500}
+.sb-wrap{display:flex;align-items:center;gap:.35rem;margin:.2rem 0}
+.sb-label{font-size:.68rem;color:var(--muted);min-width:6rem;text-align:right}
+.sb-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;position:relative}
+.sb-fill{height:100%;border-radius:3px;transition:width .6s ease-out;width:0}
+.sb-fill.good{background:var(--success)}
+.sb-fill.mid{background:var(--primary)}
+.sb-fill.bad{background:var(--accent)}
+.sb-val{font-size:.7rem;font-weight:600;min-width:2.5rem;font-family:var(--mono);color:var(--ink)}
 .form-note{font-size:.75rem;color:var(--muted);margin-top:.4rem}
 @media(max-width:560px){
 .container{padding:1rem}
@@ -877,13 +885,35 @@ function renderHist(){
   const total=won+lost+pend;
   const pct=won+lost>0?(won/(won+lost)*100).toFixed(0):'--';
 
+  // Advanced stats
+  const resolved=h.filter(x=>x.result!=='pending');
+  const avgOddsWon=resolved.length?resolved.filter(x=>x.result==='won').reduce((s,x)=>s+x.odds,0)/(won||1):0;
+  const avgOddsLost=resolved.length?resolved.filter(x=>x.result==='lost').reduce((s,x)=>s+x.odds,0)/(lost||1):0;
+  const profit=resolved.reduce((s,x)=>s+(x.result==='won'?x.odds-1:-1),0);
+  const hiConf=resolved.filter(x=>x.confidence==='HIGH');
+  const hiWon=hiConf.filter(x=>x.result==='won').length;
+  const hiTot=hiConf.length;
+  const hiPct=hiTot>0?(hiWon/hiTot*100).toFixed(0):'--';
+
+  // Best streak
+  let streak=0,bestStreak=0;
+  for(const x of h){
+    if(x.result==='won'){streak++;if(streak>bestStreak)bestStreak=streak}
+    else if(x.result==='lost')streak=0;
+  }
+
   // Stats bar
-  let stats='<div style="display:flex;gap:.6rem;flex-wrap:wrap;font-size:.75rem;padding:.4rem .6rem;background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted)">';
+  let stats='<div style="display:flex;gap:.5rem;flex-wrap:wrap;font-size:.72rem;padding:.35rem .6rem;background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted);align-items:center">';
   stats+='<span>Total: <strong style="color:var(--ink)">'+total+'</strong></span>';
   stats+='<span>Won: <strong style="color:var(--success)">'+won+'</strong></span>';
   stats+='<span>Lost: <strong style="color:var(--error)">'+lost+'</strong></span>';
-  stats+='<span>Pending: <strong>'+pend+'</strong></span>';
-  if(won+lost>0)stats+='<span>Win Rate: <strong>'+(pct)+'%</strong></span>';
+  stats+='<span>Pending: <strong style="color:var(--muted)">'+pend+'</strong></span>';
+  if(won+lost>0){
+    stats+='<span>Win Rate: <strong>'+(pct)+'%</strong></span>';
+    stats+='<span>P&amp;L: <strong style="color:'+(profit>=0?'var(--success)':'var(--error)')+'">'+(profit>=0?'+'+profit.toFixed(2):profit.toFixed(2))+'</strong></span>';
+    if(hiTot>0)stats+='<span>HIGH: <strong>'+hiWon+'/'+hiTot+' ('+hiPct+'%)</strong></span>';
+    stats+='<span>Best Streak: <strong>'+bestStreak+'</strong></span>';
+  }
   stats+='</div>';
 
   con.innerHTML=stats+h.map(i=>`
@@ -1012,10 +1042,14 @@ function clearForm(){
 
 function hideTeamInfo(){$('teamInfoA').classList.remove('visible');$('teamInfoB').classList.remove('visible')}
 
+function statBar(label,pct,cls,pctLabel){
+  const p=Math.round(Math.min(pct,100));
+  return `<div class="sb-wrap"><span class="sb-label">${label}</span><div class="sb-track"><div class="sb-fill ${cls}" style="width:${p}%"></div></div><span class="sb-val">${pctLabel||p+'%'}</span></div>`;
+}
 function showTeamInfo(selId,infoId){
   const name=$(selId).value,el=$(infoId);
   if(!name||!TEAM_DATA[name]){el.classList.remove('visible');return}
-  const d=TEAM_DATA[name];
+  const d=gt(name);
   const elo=ELO[name]||'N/A';
   const qual=GROUP_QUAL[d.g]?.[name]||[0,0,0,0];
   const champAll=CHAMP_PROB_ALL[name];
@@ -1031,29 +1065,38 @@ function showTeamInfo(selId,infoId){
   const poly=POLYMARKET[name];
   const streak=STREAKS[name];
   const homeAdv=HOME_ADV[name];
+
+  const wrPct=(d.wr*100).toFixed(0);
+  const ahPct=(d.ah*100).toFixed(0);
+  const gsPerG=(d.wcMatches>0?(d.wcGs/d.wcMatches):d.gs);
+  const gcPerG=(d.wcMatches>0?(d.wcGc/d.wcMatches):d.gc);
+  const shotEff=d.wcMatches>0&&d.wcShotsOnTarget+d.wcShotsOffTarget>0?((d.wcShotsOnTarget+d.wcShotsOffTarget)/d.wcMatches):0;
+  const ycPerG=d.wcMatches>0?(d.wcYellowCards/d.wcMatches):d.cards;
+  const cleanPct=d.wcMatches>0?(d.wcCleanSheets/d.wcMatches*100):(d.ah*100);
+  const poss=d.wcMatches>0?d.wcPossession:50;
+
   el.innerHTML=`
-    <div class="ti-row"><span class="ti-label">Group / FIFA / Elo</span><span class="ti-value">${d.g} · #${d.fifaRank} · ${elo}</span></div>
+    <div class="ti-row"><span class="ti-label">Group · FIFA · Elo</span><span class="ti-value">${d.g} · #${d.fifaRank} · ${elo}</span></div>
     ${eloDiff!==undefined?`<div class="ti-row"><span class="ti-label">Elo-FIFA Diff</span><span class="ti-value">${eloDiff>=0?'+':''}${eloDiff}</span></div>`:''}
-    <div class="ti-row"><span class="ti-label">Win · G/game</span><span class="ti-value">${(d.wr*100).toFixed(0)}% · ${d.gs}G sc / ${d.gc}G conc</span></div>
-    <div class="ti-row"><span class="ti-label">AH Cover · Qual</span><span class="ti-value">${(d.ah*100).toFixed(0)}% · ${d.p}%</span></div>
-    <div class="ti-row"><span class="ti-label">Group Finishes</span><span class="ti-value">1st:${qual[0]}% 2nd:${qual[1]}% 3rd:${qual[2]}% Elim:${qual[3]}%</span></div>
-    ${champAll!==undefined?`<div class="ti-row"><span class="ti-label">Title Prob (Table 8.1)</span><span class="ti-value">${champAll}%</span></div>`:''}
-    ${semiP!==undefined?`<div class="ti-row"><span class="ti-label">Semi-Final Prob</span><span class="ti-value">${semiP}%</span></div>`:''}
-    ${qfP!==undefined?`<div class="ti-row"><span class="ti-label">Quarter-Final Prob</span><span class="ti-value">${qfP}%</span></div>`:''}
-    ${mkt?`<div class="ti-row"><span class="ti-label">Market Title Range</span><span class="ti-value">${mkt}</span></div>`:''}
-    <div class="ti-row"><span class="ti-label">Travel · Squad Age</span><span class="ti-value">~${travel.toLocaleString()} km · ${age?age+'yr':''}</span></div>
-    ${mgr?`<div class="ti-row"><span class="ti-label">Manager</span><span class="ti-value">${mgr}</span></div>`:''}
-    ${poly?`<div class="ti-row"><span class="ti-label">Polymarket</span><span class="ti-value">${poly}% title</span></div>`:''}
-    ${streak?`<div class="ti-row"><span class="ti-label">Streak</span><span class="ti-value">${streak}</span></div>`:''}
-    ${homeAdv?`<div class="ti-row"><span class="ti-label">Host Boost</span><span class="ti-value">${HOST_KO_RATE}% host KO rate</span></div>`:''}
-    <div class="ti-row"><span class="ti-label">Form · Cards</span><span class="ti-value">${d.form} · ${d.cards}YC ${d.reds}RC</span></div>
-    <div class="ti-row"><span class="ti-label">Injuries</span><span class="ti-value">${d.injuries}</span></div>
+    <div style="margin-top:.35rem;font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">WC Stats</div>
+    ${statBar('Win Rate',wrPct,wrPct>55?'good':wrPct>40?'mid':'bad',wrPct+'%')}
+    ${statBar('AH Cover',ahPct,ahPct>55?'good':ahPct>40?'mid':'bad',ahPct+'%')}
+    ${statBar('Goals/G',gsPerG*33,gsPerG>2?'good':gsPerG>1?'mid':'bad',gsPerG.toFixed(2))}
+    ${statBar('Possession',poss,poss>55?'good':poss>45?'mid':'bad',poss.toFixed(0)+'%')}
+    ${statBar('Clean Sheet',cleanPct,cleanPct>50?'good':cleanPct>30?'mid':'bad',cleanPct.toFixed(0)+'%')}
+    ${statBar('Shots/G',shotEff*10,shotEff>12?'good':shotEff>8?'mid':'bad',shotEff.toFixed(1))}
+    ${statBar('Discipline',100-ycPerG*20,ycPerG<1.5?'good':ycPerG<2.5?'mid':'bad',(ycPerG).toFixed(1)+'YC')}
+    <div class="ti-row" style="margin-top:.35rem"><span class="ti-label">Form · Qual · Travel</span><span class="ti-value">${d.form||'N/A'} · ${d.p}% · ~${(travel/1000).toFixed(0)}k km</span></div>
+    <div class="ti-row"><span class="ti-label">Group Path</span><span class="ti-value">1st:${qual[0]}% 2nd:${qual[1]}% 3rd:${qual[2]}% Elim:${qual[3]}%</span></div>
+    ${champAll!==undefined?`<div class="ti-row"><span class="ti-label">Title Prob</span><span class="ti-value">${champAll}%</span></div>`:''}
+    ${semiP!==undefined?`<div class="ti-row"><span class="ti-label">Semi Prob</span><span class="ti-value">${semiP}%</span></div>`:''}
+    ${age?`<div class="ti-row"><span class="ti-label">Squad Age · Manager</span><span class="ti-value">${age}yr${mgr?' · '+mgr:''}</span></div>`:''}
+    <div class="ti-row"><span class="ti-label">Injuries</span><span class="ti-value">${d.injuries||'N/A'}</span></div>
     ${injPlayers?`<div class="ti-row"><span class="ti-label">Key Injury Risks</span><span class="ti-value">${injPlayers.join('; ')}</span></div>`:''}
-    ${liveInjuries.length?`<div class="ti-row"><span class="ti-label">Injury Updates (ESPN)</span><span class="ti-value" style="font-size:.7rem">${liveInjuries.map(i=>i.player+' ('+i.injury+')').join('; ')}</span></div>`:''}
+    ${liveInjuries.length?`<div class="ti-row"><span class="ti-label">Injury Updates</span><span class="ti-value">${liveInjuries.map(i=>i.player+' ('+i.injury+')').join('; ')}</span></div>`:''}
     <div class="ti-row"><span class="ti-label">Kimi Analysis</span><span class="ti-value" style="font-size:.75rem">${d.np||''}</span></div>
   `;
   el.classList.add('visible');
-  // Update labels
   const tA=$('teamA').value||'Team A',tB=$('teamB').value||'Team B';
   $('homeLabel').innerHTML=tA+' (Home) <span>odds</span>';
   $('awayLabel').innerHTML=tB+' (Away) <span>odds</span>';

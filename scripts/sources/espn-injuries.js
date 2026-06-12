@@ -2,7 +2,7 @@ const URL = 'https://www.espn.com/soccer/story/_/id/48572979/2026-fifa-world-cup
 
 const TEAMS = ["Germany","Netherlands","Brazil","France","Spain","England","Argentina","Japan",
   "United States","Canada","Uruguay","Australia","Ghana","Morocco","Scotland","Türkiye","Turkey",
-  "Algeria","Croatia","Portugal","Belgium","Cape Verde","Italy"];
+  "Algeria","Croatia","Portugal","Belgium","Cape Verde"];
 
 export async function getInjuries(){
   try{
@@ -24,16 +24,23 @@ export async function getInjuries(){
         if(block.indexOf('</h3>')<0)continue;
         const h3Content=block.substring(0,block.indexOf('</h3>'));
 
-        // Extract player name: find text after last > in the h3
-        const parts=h3Content.split(/<[^>]*>/g).map(p=>p.trim()).filter(Boolean);
-        const playerParts=parts.filter(p=>p.length>1&&!p.startsWith('http')&&!p.startsWith('data:'));
-        if(!playerParts.length)continue;
-
-        // Player name is usually the second-to-last or last meaningful text
-        const player=playerParts[playerParts.length-1]?.replace(/,.*$/,'').trim();
+        // Extract player name: look for <a> tag with player-guid (player link)
+        let player='';
+        const aMatch=h3Content.match(/<a[^>]*data-player-guid[^>]*>([^<]+)<\/a>/i);
+        if(aMatch) player=aMatch[1].trim();
+        if(!player){
+          // Fallback: text before comma, excluding team logo alt text
+          const textParts=h3Content.split(/<[^>]*>/g).map(p=>p.trim()).filter(p=>p.length>1);
+          for(const p of textParts){
+            const cleaned=p.replace(/,.*$/,'').trim();
+            if(cleaned.length>2&&!TEAMS.includes(cleaned)){
+              player=cleaned;break;
+            }
+          }
+        }
         if(!player||player.length<2)continue;
 
-        // Find team name: look for known teams in the h3 content
+        // Find team name: look for known teams
         let team='';
         for(const t of TEAMS){
           if(h3Content.includes(t)||h3Content.includes(t.toLowerCase())){
