@@ -198,7 +198,8 @@ input[type=number]{-moz-appearance:textfield}
 </div>
 
 <div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">
-  <strong>v1.02</strong> — Rambo Action · Auto-sync 6PM/12AM GMT+8 · FIFA API + Football-data.org · Match scores, possession &amp; form updated live
+  <span onclick="toggleVersionHistory()" style="cursor:pointer" title="Click for version history"><strong>v1.02</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Auto-sync 6PM/12AM GMT+8 · FIFA API + Football-data.org · Match scores, possession &amp; form updated live
+  <div id="versionHistory" style="display:none;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);text-align:left;line-height:1.7"></div>
 </div>
 
 <script>
@@ -298,6 +299,10 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
 const VERSION = "1.02";
+const VERSION_HISTORY = [
+  {v:"1.02",date:"Jun 12",msg:"LiveScore scraping: shots, cards, fouls, corners, GK saves — all match stats live"},
+  {v:"1.01",date:"Jun 12",msg:"Rambo Action launch: FIFA API auto-sync, Football-data.org fallback, dedup"}
+];
 const LAST_SYNC = "Jun 12, 01:38 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true};
 const WC_PROCESSED = {"400021441":true,"400021443":true};
@@ -828,6 +833,19 @@ function setRes(id,r){const h=getHist(),i=h.find(x=>x.id===id);if(i){i.result=r;
 function delPred(id){setHist(getHist().filter(x=>x.id!==id));renderHist()}
 function clearHistory(){if(confirm('Clear all?')){setHist([]);renderHist()}}
 
+function populateVersionHistory(){
+  const el=$('versionHistory');
+  if(!el||!VERSION_HISTORY)return;
+  el.innerHTML=VERSION_HISTORY.slice().reverse().map(function(h){
+    return '<div style="display:flex;gap:.5rem;padding:.15rem 0"><span style="color:var(--primary);font-weight:600;white-space:nowrap">v'+h.v+'</span><span style="opacity:.6">'+h.date+'</span><span>'+h.msg+'</span></div>';
+  }).join('');
+}
+function toggleVersionHistory(){
+  const el=$('versionHistory');
+  if(!el)return;
+  if(!el.children.length)populateVersionHistory();
+  el.style.display=el.style.display==='none'?'block':'none';
+}
 function toggleTheme(){
   const d=document.documentElement;
   if(d.getAttribute('data-theme')==='dark'){
@@ -973,6 +991,7 @@ function init(){
   if(LAST_SYNC&&LAST_SYNC!=='—'){
     const sb=$('syncBar');if(sb){sb.style.display='flex';$('syncText').textContent='Last sync: '+LAST_SYNC}
   }
+  populateVersionHistory();
 }
 init();
 </script>

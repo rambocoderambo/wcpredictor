@@ -209,9 +209,16 @@ async function main(){
     const next=(raw+0.01).toFixed(2);
     html=html.replace(/const VERSION = "[\d.]+"/,'const VERSION = "'+next+'"');
     html=html.replace(
-      /<strong>v[\d.]+<\/strong> — Rambo Action · Auto-sync 6PM\/12AM GMT\+8 · FIFA API \+ Football-data\.org · Match scores, possession &amp; form updated live/,
-      '<strong>v'+next+'</strong> — Rambo Action · Auto-sync 6PM/12AM GMT+8 · FIFA API + Football-data.org · Match scores, possession &amp; form updated live'
+      /<strong>v[\d.]+<\/strong> — /,
+      '<strong>v'+next+'</strong> — '
     );
+    // Add version history entry
+    const today=new Date().toLocaleString('en-US',{month:'short',day:'numeric',timeZone:'Asia/Singapore'});
+    const statsMsg='Live match data: '+(finished.length*2)+' team-matches processed';
+    const histRe=/(const VERSION_HISTORY = \[[\s\S]*?\]);/;
+    if(histRe.test(html)){
+      html=html.replace(histRe,'$1,{v:"'+next+'",date:"'+today+'",msg:"'+statsMsg+'"}');
+    }
     verStr=next;
   }
 
