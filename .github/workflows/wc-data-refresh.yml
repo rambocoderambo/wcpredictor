@@ -1,6 +1,7 @@
 name: Rambo Action
 on:
   schedule:
+    # Malaysia time (GTM+8): 12pm, 6pm, 12am, 6am
     - cron: '0 4,10,16,22 * * *'
   workflow_dispatch:
 

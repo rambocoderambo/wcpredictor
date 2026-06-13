@@ -259,7 +259,7 @@ async function main(){
       '<strong>v'+next+'</strong></span> — '
     );
     // Add version history entry
-    const today=new Date().toLocaleString('en-US',{month:'short',day:'numeric',timeZone:'Asia/Singapore'});
+    const today=new Date().toLocaleString('en-US',{month:'short',day:'numeric',timeZone:'Asia/Kuala_Lumpur'});
     const statsMsg='Live match data: '+(finished.length*2)+' team-matches processed';
     const histRe=/(const VERSION_HISTORY = \[[\s\S]*?)\];/;
     if(histRe.test(html)){
@@ -269,7 +269,7 @@ async function main(){
   }
 
   // Update LAST_SYNC
-  const now=new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Singapore'});
+  const now=new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kuala_Lumpur'});
   html=html.replace(/const LAST_SYNC = "[^"]*"/,'const LAST_SYNC = "'+now+'"');
 
   writeHtml(html);
