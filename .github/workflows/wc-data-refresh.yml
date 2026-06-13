@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Fetch live WC data
         run: node scripts/fetch-wc-data.js
         env:
@@ -21,5 +21,8 @@ jobs:
           git config user.name "rambo-bot"
           git config user.email "bot@wcpredictor"
           git add index.html
-          git diff --quiet || git commit -m "rambo action sync"
-          git push
+          if ! git diff --quiet; then
+            git commit -m "rambo action sync $(date +%Y-%m-%d)"
+            git pull --rebase origin main
+            git push
+          fi
