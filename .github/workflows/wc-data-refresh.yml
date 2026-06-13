@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: 22
       - name: Fetch live WC data
-        run: node scripts/fetch-wc-data.js
+        run: node scripts/fetch-wc-data.js || true
         env:
           FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
       - name: Commit and push
@@ -21,8 +21,17 @@ jobs:
           git config user.name "rambo-bot"
           git config user.email "bot@wcpredictor"
           git add index.html
-          if ! git diff --quiet; then
-            git commit -m "rambo action sync $(date +%Y-%m-%d)"
-            git pull --rebase origin main
-            git push
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
           fi
+          git commit -m "rambo action sync $(date +%Y-%m-%d)"
+          for i in 1 2 3; do
+            echo "Push attempt $i"
+            git pull --rebase origin main && git push && break
+            if [ "$i" -eq 3 ]; then
+              echo "All push attempts failed — forcing"
+              git push --force-with-lease
+            fi
+            sleep 5
+          done

@@ -81,7 +81,7 @@ async function main(){
         }));
       }catch(fde){console.warn('Football-data.org also failed:',fde.message)}
     }
-    if(!matches.length){console.log('No data update this run');process.exit(1)}
+    if(!matches.length){console.log('No data update this run');return}
   }
 
   // Parse already-processed match IDs
