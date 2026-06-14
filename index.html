@@ -854,9 +854,9 @@ function estCover(teamA,teamB,line){
       const needGoal=lineSize-.25;
       adjust=gd>=needGoal?.12:gd>=needGoal-.5?.04:-.12;
     } else {
-      // Very big lines (-2.5, -3, -3.5+) — needs massive goal diff
-      const needGoal=lineSize-1;
-      adjust=gd>=needGoal?.08:gd>=needGoal-1?.02:-.15;
+      // Very big lines (-2.5, -3, -3.5+) — each extra half-goal gets harsher penalty
+      const basePenalty=-.15-(lineSize-1.5)*.06;
+      adjust=gd>=lineSize?.1:gd>=lineSize-1?.03:basePenalty;
     }
   } else if(n===0){
     adjust=gd>0?.05:gd>-0.5?0:-.05;
@@ -870,9 +870,15 @@ function estCover(teamA,teamB,line){
 
   // Blend for handicap-specific cover rate — tighter bounds for extreme lines
   let cover=pWin+adjust;
-  if(lineSize>=2)cover=clamp(cover,.05,.8);
-  else if(lineSize>=1)cover=clamp(cover,.08,.9);
-  else cover=clamp(cover,.1,.95);
+  if(lineSize>=2){
+    // Exponential decay: -3.5 maxes at ~60%, -4.5 at ~45%
+    const maxCover=Math.max(.15,.85-lineSize*.07);
+    cover=clamp(cover,.05,maxCover);
+  } else if(lineSize>=1){
+    cover=clamp(cover,.08,.9);
+  } else {
+    cover=clamp(cover,.1,.95);
+  }
 
   // Check upset scenarios
   const upsetKey1=teamA+' vs '+teamB,upsetKey2=teamB+' vs '+teamA;
