@@ -76,6 +76,7 @@ input[type=number]{-moz-appearance:textfield}
 .history-item .h-result.pending{background:var(--surface);color:var(--muted)}
 .history-item .h-result.won{background:var(--high-bg);color:var(--high-text)}
 .history-item .h-result.lost{background:var(--low-bg);color:var(--low-text)}
+.history-item .h-result.draw{background:var(--med-bg);color:var(--med-text)}
 .history-item .h-actions{display:flex;gap:.25rem}
 .empty{text-align:center;padding:2rem;color:var(--muted);font-size:.875rem}
 .team-info{display:none;margin-top:.75rem;padding:.75rem;background:var(--surface);border-radius:6px;font-size:.8rem;border:1px solid var(--border)}
@@ -1112,18 +1113,17 @@ function renderHist(){
   if(!h.length){con.innerHTML='<div class="empty">No predictions yet.</div>';act.style.display='none';return}
   act.style.display='flex';
 
-  // Win/loss tally
+  // Win/loss/draw tally
   const won=h.filter(x=>x.result==='won').length;
   const lost=h.filter(x=>x.result==='lost').length;
+  const draw=h.filter(x=>x.result==='draw').length;
   const pend=h.filter(x=>x.result==='pending').length;
-  const total=won+lost+pend;
+  const total=won+lost+draw+pend;
   const pct=won+lost>0?(won/(won+lost)*100).toFixed(0):'--';
 
   // Advanced stats
   const resolved=h.filter(x=>x.result!=='pending');
-  const avgOddsWon=resolved.length?resolved.filter(x=>x.result==='won').reduce((s,x)=>s+x.odds,0)/(won||1):0;
-  const avgOddsLost=resolved.length?resolved.filter(x=>x.result==='lost').reduce((s,x)=>s+x.odds,0)/(lost||1):0;
-  const profit=resolved.reduce((s,x)=>s+(x.result==='won'?x.odds-1:-1),0);
+  const profit=resolved.reduce((s,x)=>s+(x.result==='won'?x.odds-1:x.result==='draw'?0:-1),0);
   const hiConf=resolved.filter(x=>x.confidence==='HIGH');
   const hiWon=hiConf.filter(x=>x.result==='won').length;
   const hiTot=hiConf.length;
@@ -1140,6 +1140,7 @@ function renderHist(){
   let stats='<div style="display:flex;gap:.5rem;flex-wrap:wrap;font-size:.72rem;padding:.35rem .6rem;background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted);align-items:center">';
   stats+='<span>Total: <strong style="color:var(--ink)">'+total+'</strong></span>';
   stats+='<span>Won: <strong style="color:var(--success)">'+won+'</strong></span>';
+  stats+='<span>Draw: <strong style="color:var(--primary)">'+draw+'</strong></span>';
   stats+='<span>Lost: <strong style="color:var(--error)">'+lost+'</strong></span>';
   stats+='<span>Pending: <strong style="color:var(--muted)">'+pend+'</strong></span>';
   if(won+lost>0){
@@ -1155,9 +1156,10 @@ function renderHist(){
       <span class="h-match">${i.teamA} vs ${i.teamB}<span class="ti">ⓘ</span></span>
       <span class="h-pick">${i.side==='away'?i.teamB+' ':''}${i.pick}</span>
       <span class="h-odds">@ ${i.odds.toFixed(3)}</span>
-      <span class="h-result ${i.result}">${i.result==='pending'?'Pnd':i.result==='won'?'Won':'Lst'}</span>
+      <span class="h-result ${i.result}">${i.result==='pending'?'Pnd':i.result==='won'?'Won':i.result==='draw'?'Drw':'Lst'}</span>
       <div class="h-actions" onclick="event.stopPropagation()">
         <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem" onclick="setRes(${i.id},'won')" title="Mark as won">✓</button>
+        <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem;color:var(--primary)" onclick="setRes(${i.id},'draw')" title="Mark as draw/push">½</button>
         <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem;color:var(--error)" onclick="setRes(${i.id},'lost')" title="Mark as lost">✗</button>
         <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem;color:var(--muted)" onclick="delPred(${i.id})" title="Delete">✕</button>
       </div>
@@ -1187,7 +1189,7 @@ function viewHistory(id){
         <span class="${confCls}">${item.confidence}</span>
         <span>EV: ${item.ev>=0?'+':''}${(item.ev*100).toFixed(1)}%</span>
         <span>Est. Cover: ${item.cover?((item.cover*100).toFixed(0)+'%'):'--'}</span>
-        <span>Result: ${item.result==='pending'?'Pending':item.result==='won'?'Won':'Lost'}</span>
+        <span>Result: ${item.result==='pending'?'Pending':item.result==='won'?'Won':item.result==='draw'?'Draw/Push':'Lost'}</span>
       </div>
     </div>
     ${optsHTML}
