@@ -1070,11 +1070,12 @@ function renderResults(teamA,teamB,opts,best){
       <div class="meta">
         <span class="${conf.cls}" title="Confidence: how strong the data supports this pick (HIGH=strong, MEDIUM=moderate, LOW=weak)"><span class="ti">ⓘ</span>${conf.label}</span>
         <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value."><span class="ti">ⓘ</span>EV: ${best.ev>=0?'+':''}${(best.ev*100).toFixed(1)}%</span>
-        <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line"><span class="ti">ⓘ</span>Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
+        <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line — calculated via Poisson Monte Carlo (5,000 simulations)"><span class="ti">ⓘ</span>Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
         <span title="Fair odds: the minimum odds needed for this bet to break even (1 ÷ cover %). Your odds should be higher than this."><span class="ti">ⓘ</span>Fair: ${(1/best.cover).toFixed(3)}</span>
         <span title="Composite Score: weighted blend of EV, team form, matchup context, and odds value (higher = stronger pick)"><span class="ti">ⓘ</span>Score: ${(best.score*100).toFixed(0)}%</span>
       </div>
     </div>
+    ${opts.every(o=>o.ev<0)?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--low-bg);color:var(--low-text);border-radius:6px;font-size:.8rem;text-align:center;font-weight:600">⚠ All 6 bets show negative EV — no value at these odds. Skip this match or find better prices.</div>':''}
     ${matchHTML}
     <table class="options-table">
       <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
