@@ -959,8 +959,9 @@ function analyze(){
     }
     if(!isNaN(oa)&&oa>1){
       const hn=parseFloat(h);
-      const al=hn>=0?'+'+hn:''+hn;
-      const ac=awayCov(estCover(teamA,teamB,(-hn).toString()));
+      const ah=-hn;
+      const al=ah>=0?'+'+ah:''+ah;
+      const ac=awayCov(estCover(teamA,teamB,ah.toString()));
       bets.push(scoreBet(teamA,teamB,{line:al,side:'away',team:teamB,odds:oa,cover:ac,idx:i},a,b));
     }
   }
