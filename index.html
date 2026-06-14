@@ -788,7 +788,7 @@ function estCover(teamA,teamB,line){
   const a=gt(teamA),b=gt(teamB);
   if(!a||!b)return.5;
 
-  // 1. Kimi match prediction baseline
+  // 1. Kimi match prediction baseline (static — reduced weight during WC)
   const matchP=getMatchPred(teamA,teamB);
 
   // 2. Elo-based win probability
@@ -800,13 +800,30 @@ function estCover(teamA,teamB,line){
   const gd=(a.gs||1.5)-(b.gc||1);
   let base=a.ah||.5;
 
-  // Blend Kimi match pred with Elo and stats
+  // 4. Live WC form — use actual goals from LIVE_DATA
+  const liveFormA=(a.wcMatches||0)>0?(a.gs/(a.gs+a.gc||1)):.5;
+  const liveFormB=(b.wcMatches||0)>0?(b.gs/(b.gs+b.gc||1)):.5;
+  const liveGd=liveFormA-liveFormB;
+
+  // Blend: reduce static Kimi weight, add live form
   let pWin;
+  const hasLive=(a.wcMatches||0)>0||(b.wcMatches||0)>0;
   if(matchP!==null){
-    pWin=matchP*.40+eloWinP*.30+base*.30;
+    if(hasLive){
+      pWin=matchP*.20+eloWinP*.20+base*.20+liveFormA*.40;
+    } else {
+      pWin=matchP*.40+eloWinP*.30+base*.30;
+    }
   } else {
-    pWin=eloWinP*.50+base*.50;
+    if(hasLive){
+      pWin=eloWinP*.25+base*.25+liveFormA*.50;
+    } else {
+      pWin=eloWinP*.50+base*.50;
+    }
   }
+
+  // Regression to 50% — shrink confidence to avoid overfitting
+  pWin=.5+(pWin-.5)*.85;
 
   // Home advantage boost for hosts (Ch.6.6: 91% host knockout rate)
   const haA=HOME_ADV[teamA],haB=HOME_ADV[teamB];
@@ -1028,7 +1045,7 @@ function scoreBet(teamA,teamB,b,a,bd){
   parts.push('Backtest: Kimi model 62.5% on 2018/60.4% on 2022 group stage.');
   parts.push('Est. cover '+(b.cover*100).toFixed(0)+'% | EV '+(evV>=0?'+':'')+(evV*100).toFixed(1)+'%. '+conf.label+' conviction.');
 
-  b.ev=evV;b.score=finalScore;b.confidence=conf;
+  b.ev=evV;b.score=finalScore;b.confidence=conf;b.fairOdds=+(1/b.cover).toFixed(3);
   b.reasoning=parts.join(' ').replace(/\. (?!\d)/g,'.\n');
   return b;
 }
@@ -1061,17 +1078,19 @@ function renderResults(teamA,teamB,opts,best){
         <span class="${conf.cls}" title="Confidence: how strong the data supports this pick (HIGH=strong, MEDIUM=moderate, LOW=weak)"><span class="ti">ⓘ</span>${conf.label}</span>
         <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value."><span class="ti">ⓘ</span>EV: ${best.ev>=0?'+':''}${(best.ev*100).toFixed(1)}%</span>
         <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line"><span class="ti">ⓘ</span>Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
+        <span title="Fair odds: the minimum odds needed for this bet to break even (1 ÷ cover %). Your odds should be higher than this."><span class="ti">ⓘ</span>Fair: ${(1/best.cover).toFixed(3)}</span>
         <span title="Composite Score: weighted blend of EV, team form, matchup context, and odds value (higher = stronger pick)"><span class="ti">ⓘ</span>Score: ${(best.score*100).toFixed(0)}%</span>
       </div>
     </div>
     ${matchHTML}
     <table class="options-table">
-      <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
+      <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
       ${opts.map((o,i)=>`
         <tr${i===0?' class="best"':''}>
           <td>${i+1}</td><td>${o.idx}</td><td>${o.side==='home'?'H':'A'}</td>
           <td><strong>${o.side==='home'?teamA:teamB} ${o.line}</strong></td>
           <td class="num">${o.odds.toFixed(3)}</td>
+          <td class="num" style="color:var(--muted);font-size:.7rem">${o.fairOdds.toFixed(3)}</td>
           <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${o.ev>=0?'+':''}${(o.ev*100).toFixed(1)}%</td>
           <td class="num">${(o.cover*100).toFixed(0)}%</td>
           <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
@@ -1104,7 +1123,7 @@ function setHist(h){localStorage.setItem('wcP',JSON.stringify(h))}
 
 function saveToHistory(teamA,teamB,best,allOpts,reasoning){
   const h=getHist();
-  h.unshift({id:Date.now(),teamA,teamB,side:best.side,pick:best.line,odds:best.odds,confidence:best.confidence.label,ev:best.ev,cover:best.cover,reasoning:reasoning||'',opts:allOpts?allOpts.map(o=>({line:o.line,side:o.side,odds:o.odds,ev:o.ev,cover:o.cover,confidence:o.confidence.label})):[],result:'pending',date:fmtDate()});
+  h.unshift({id:Date.now(),teamA,teamB,side:best.side,pick:best.line,odds:best.odds,fairOdds:best.fairOdds,confidence:best.confidence.label,ev:best.ev,cover:best.cover,reasoning:reasoning||'',opts:allOpts?allOpts.map(o=>({line:o.line,side:o.side,odds:o.odds,fairOdds:o.fairOdds,ev:o.ev,cover:o.cover,confidence:o.confidence.label})):[],result:'pending',date:fmtDate()});
   if(h.length>50)h.length=50;
   setHist(h);renderHist();
 }
