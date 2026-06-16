@@ -19,6 +19,9 @@ kimireport.pdf
 # Reference images
 bgcolor.jpg
 
+# Project documentation (not part of the app)
+docs-structure.html
+
 # OS files
 .DS_Store
 Thumbs.db

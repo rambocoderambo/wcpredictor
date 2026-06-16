@@ -25,7 +25,17 @@
 - Monte Carlo simulations (Ch.1.2)
 - Travel/altitude/heat data (Ch.6)
 
+### Session: Phase 2 — Live WC Data Layer
+- Added GitHub Action cron (6:00 + 12:00 UTC) with 3 API sources: API-Football, Sofascore, Football-data.org
+- Added 15 new prediction dimensions: attack, defense, discipline, late goals, possession, shots, GK saves, etc.
+- Expanded scoring formula from 4 factors to 8 weighted factors
+- LIVE_DATA object keeps WC match stats separate from static Kimi TEAM_DATA
+- `gt()` merges both data sources transparently
+- Version auto-increments on each data refresh (v1.00 format)
+
 ### Rules for future sessions
 - Always verify `const` declarations have no duplicates after bulk edits
 - When editing template literals, check opening/closing backticks match
 - Prefer incremental edits over large block replacements when possible
+- When creating API fetch scripts, test Node.js syntax (`node --check`) before commit
+- Use native `fetch` (Node 18+) instead of npm dependencies for GitHub Actions
