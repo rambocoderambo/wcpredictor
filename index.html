@@ -1436,6 +1436,33 @@ function init(){
     const sb=$('syncBar');if(sb){sb.style.display='flex';$('syncText').textContent='Last sync: '+LAST_SYNC}
   }
   populateVersionHistory();
+  // Restore last form inputs
+  try{
+    const saved=JSON.parse(localStorage.getItem('wcForm')||'{}');
+    if(saved.teamA)$('teamA').value=saved.teamA;
+    if(saved.teamB)$('teamB').value=saved.teamB;
+    for(let i=1;i<=3;i++){
+      if(saved['h'+i])$('h'+i).value=saved['h'+i];
+      if(saved['o'+i+'h'])$('o'+i+'h').value=saved['o'+i+'h'];
+      if(saved['o'+i+'a'])$('o'+i+'a').value=saved['o'+i+'a'];
+    }
+    if(saved.teamA)showTeamInfo('teamA','teamInfoA');
+    if(saved.teamB)showTeamInfo('teamB','teamInfoB');
+  }catch{}
+}
+
+// Save form inputs on change
+document.querySelectorAll('select,input').forEach(el=>{
+  el.addEventListener('change',saveForm);
+  el.addEventListener('input',saveForm);
+});
+function saveForm(){
+  var f={};
+  f.teamA=$('teamA').value;f.teamB=$('teamB').value;
+  for(var i=1;i<=3;i++){
+    f['h'+i]=$('h'+i).value;f['o'+i+'h']=$('o'+i+'h').value;f['o'+i+'a']=$('o'+i+'a').value;
+  }
+  try{localStorage.setItem('wcForm',JSON.stringify(f))}catch{}
 }
 init();
 </script>
