@@ -594,7 +594,8 @@ const VERSION_HISTORY = [
   {v:"1.05",date:"Jun 12",msg:"ESPN injury scraper, team comparison view, stat bars"},
   {v:"1.06",date:"Jun 12",msg:"Draw result option, handicap sign fix, Poisson cover estimation"},
   {v:"1.07",date:"Jun 14",msg:"Poisson Monte Carlo: 5,000 sims per match, replaced all arbitrary adjustments"},
-  {v:"1.10",date:"Jun 16",msg:"50% regression calibration to fix overconfident cover probabilities"}
+  {v:"1.10",date:"Jun 16",msg:"50% regression calibration to fix overconfident cover probabilities"},
+  {v:"1.12",date:"Jun 16",msg:"Kimi blend reduced to 15%, knockout regression (75%), extreme handicap warning, asynchronous regression"}
 ];
 const LAST_SYNC = "Jun 14, 01:10 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true,"1417915":true,"1417916":true,"1417921":true,"1417926":true};
@@ -852,13 +853,17 @@ function estCover(teamA,teamB,line){
   let cover=(coverCount+drawCount*0.5)/trials;
 
   // Regression to 50% — only for covers above 50% (favorite side)
-  // High handicaps already have low raw cover — don't inflate them
-  if(cover>.5)cover=.5+(cover-.5)*.5;
+  // Knockout stage (3+ matches played) gets stronger regression — tighter matches
+  if(cover>.5){
+    const isKnockout=wcA>=3&&wcB>=3;
+    const regress=isKnockout?0.75:0.5;
+    cover=.5+(cover-.5)*(1-regress);
+  }
 
-  // Blend with Kimi prediction for stability when WC data is scarce
+  // Blend with Kimi prediction for stability when WC data is scarce — reduced weight
   const matchP=getMatchPred(teamA,teamB);
   if(matchP!==null&&wcA+wcB<2){
-    const blended=matchP*0.4+cover*0.6;
+    const blended=matchP*0.15+cover*0.85;
     return clamp(blended,.05,.95);
   }
   return clamp(cover,.05,.95);
