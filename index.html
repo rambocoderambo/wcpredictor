@@ -1010,12 +1010,19 @@ function analyze(){
 
 function scoreBet(teamA,teamB,b,a,bd){
   const ip=imp(b.odds);
-  const evV=ev(b.cover,b.odds);
+
+  // Market-implied λ blending: blend our Poisson cover with the market's implied cover
+  // Market-implied cover = 1/odds (the break-even probability the market assigns)
+  // Trust our model 70%, the market 30%
+  const marketCover=1/b.odds;
+  const blendedCover=b.cover*0.7+marketCover*0.3;
+  const blendedEv=ev(blendedCover,b.odds);
+
   const pickT=b.side==='home'?teamA:teamB;
   const oppT=b.side==='home'?teamB:teamA;
   const fS=b.side==='home'?formScore(teamA):formScore(teamB);
   const cS=ctxScore(teamA,teamB);
-  const oS=oddsScore(ip,b.cover);
+  const oS=oddsScore(ip,blendedCover);
   const aS=attackScore(pickT);
   const dS=defScore(pickT);
   const discS=disciplineScore(pickT);
@@ -1024,7 +1031,7 @@ function scoreBet(teamA,teamB,b,a,bd){
   const moS=motivationScore(pickT,oppT);
   const fS2=fatigueScore(pickT);
 
-  const total=evV*.22+fS*.08+aS*.12+dS*.12+discS*.08+cS*.08+lS*.08+mS*.08+moS*.06+fS2*.03+oS*.05;
+  const total=blendedEv*.22+fS*.08+aS*.12+dS*.12+discS*.08+cS*.08+lS*.08+mS*.08+moS*.06+fS2*.03+oS*.05;
 
   // Market divergence bonus
   const div=DIVERGENCE[pickT]||0;
@@ -1035,7 +1042,7 @@ function scoreBet(teamA,teamB,b,a,bd){
   const champBonus=champAll/100*.05;
 
   const finalScore=total+divBonus+champBonus;
-  const conf=confLabel(finalScore,evV);
+  const conf=confLabel(finalScore,blendedEv);
 
   const parts=[];
   const pickD=gt(pickT);
@@ -1061,9 +1068,9 @@ function scoreBet(teamA,teamB,b,a,bd){
   const inj=INJURY_MATRIX[pickT];
   if(inj&&inj.length)parts.push('Injury watch: '+inj.join('. ')+'.');
   parts.push('Backtest: Kimi model 62.5% on 2018/60.4% on 2022 group stage.');
-  parts.push('Est. cover '+(b.cover*100).toFixed(0)+'% | EV '+(evV>=0?'+':'')+clamp(evV*100,-99,99).toFixed(1)+'%. '+conf.label+' conviction.');
+  parts.push('Est. cover '+(blendedCover*100).toFixed(0)+'% | EV '+(blendedEv>=0?'+':'')+clamp(blendedEv*100,-99,99).toFixed(1)+'%. '+conf.label+' conviction.');
 
-  b.ev=evV;b.score=finalScore;b.confidence=conf;b.fairOdds=+(1/b.cover).toFixed(3);
+  b.ev=blendedEv;b.cover=blendedCover;b.score=finalScore;b.confidence=conf;b.fairOdds=+(1/blendedCover).toFixed(3);
   b.reasoning=parts.join(' ').replace(/\. (?!\d)/g,'.\n');
   return b;
 }
