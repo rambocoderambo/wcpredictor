@@ -733,6 +733,7 @@ function gt(name){
 function imp(odds){return 1/odds}
 function ev(w,odds){return w*odds-1}
 function clamp(v,m,M){return Math.max(m,Math.min(M,v))}
+function dispEv(v,showSign){var p=clamp(v*100,-99,99);return (showSign&&p>0?'+':'')+p.toFixed(1)+'%'}
 
 function attackScore(team){
   const d=gt(team);if(!d)return.5;
@@ -1046,7 +1047,7 @@ function scoreBet(teamA,teamB,b,a,bd){
   const inj=INJURY_MATRIX[pickT];
   if(inj&&inj.length)parts.push('Injury watch: '+inj.join('. ')+'.');
   parts.push('Backtest: Kimi model 62.5% on 2018/60.4% on 2022 group stage.');
-  parts.push('Est. cover '+(b.cover*100).toFixed(0)+'% | EV '+(evV>=0?'+':'')+(evV*100).toFixed(1)+'%. '+conf.label+' conviction.');
+  parts.push('Est. cover '+(b.cover*100).toFixed(0)+'% | EV '+(evV>=0?'+':'')+clamp(evV*100,-99,99).toFixed(1)+'%. '+conf.label+' conviction.');
 
   b.ev=evV;b.score=finalScore;b.confidence=conf;b.fairOdds=+(1/b.cover).toFixed(3);
   b.reasoning=parts.join(' ').replace(/\. (?!\d)/g,'.\n');
@@ -1079,13 +1080,15 @@ function renderResults(teamA,teamB,opts,best){
       <div class="pick"><strong>${sl} ${best.line}</strong> @ ${best.odds.toFixed(3)}</div>
       <div class="meta">
         <span class="${conf.cls}" title="Confidence: how strong the data supports this pick (HIGH=strong, MEDIUM=moderate, LOW=weak)"><span class="ti">ⓘ</span>${conf.label}</span>
-        <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value."><span class="ti">ⓘ</span>EV: ${best.ev>=0?'+':''}${(best.ev*100).toFixed(1)}%</span>
+        <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value."><span class="ti">ⓘ</span>EV: ${dispEv(best.ev,1)}</span>
         <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line — calculated via Poisson Monte Carlo (5,000 simulations)"><span class="ti">ⓘ</span>Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
         <span title="Fair odds: the minimum odds needed for this bet to break even (1 ÷ cover %). Your odds should be higher than this."><span class="ti">ⓘ</span>Fair: ${(1/best.cover).toFixed(3)}</span>
         <span title="Composite Score: weighted blend of EV, team form, matchup context, and odds value (higher = stronger pick)"><span class="ti">ⓘ</span>Score: ${(best.score*100).toFixed(0)}%</span>
       </div>
     </div>
     ${opts.every(o=>o.ev<0)?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--low-bg);color:var(--low-text);border-radius:6px;font-size:.8rem;text-align:center;font-weight:600">⚠ All 6 bets show negative EV — no value at these odds. Skip this match or find better prices.</div>':''}
+    ${opts.filter(o=>o.ev>0.5).length>=2?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--warning);color:oklch(0.15 0.05 85);border-radius:6px;font-size:.78rem;text-align:center">⚠ Multiple bets with EV &gt;50% — these odds look unrealistic. Verify your inputs. Handicap lines are correlated; not all can have extreme value.</div>':''}
+    ${opts.filter(o=>o.ev>1).length>=1?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--warning);color:oklch(0.15 0.05 85);border-radius:6px;font-size:.78rem;text-align:center">⚠ EV &gt;100% detected — the odds you entered are likely wrong or the cover estimate is unreliable for these extreme lines. Recheck your handicap inputs.</div>':''}
     ${matchHTML}
     <table class="options-table">
       <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
@@ -1095,7 +1098,7 @@ function renderResults(teamA,teamB,opts,best){
           <td><strong>${o.side==='home'?teamA:teamB} ${o.line}</strong></td>
           <td class="num">${o.odds.toFixed(3)}</td>
           <td class="num" style="color:var(--muted);font-size:.7rem">${o.fairOdds.toFixed(3)}</td>
-          <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${o.ev>=0?'+':''}${(o.ev*100).toFixed(1)}%</td>
+          <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${dispEv(o.ev,1)}</td>
           <td class="num">${(o.cover*100).toFixed(0)}%</td>
           <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
         </tr>`).join('')}
@@ -1198,7 +1201,7 @@ function viewHistory(id){
   if(item.opts&&item.opts.length){
     optsHTML='<table class="options-table"><tr><th title="Ranking order"><span class="ti">ⓘ</span>#</th><th title="Side: H=Home, A=Away"><span class="ti">ⓘ</span>S</th><th title="The bet selection"><span class="ti">ⓘ</span>Bet</th><th class="num" title="Decimal odds"><span class="ti">ⓘ</span>Odds</th><th class="num" title="Expected Value — positive = value"><span class="ti">ⓘ</span>EV</th><th class="num" title="Cover probability — chance of covering the handicap"><span class="ti">ⓘ</span>Cov</th><th class="num" title="Confidence level"><span class="ti">ⓘ</span>Conf</th></tr>';
     item.opts.forEach((o,i)=>{
-      optsHTML+='<tr'+(i===0?' class="best"':'')+'><td>'+(i+1)+'</td><td>'+o.side.charAt(0).toUpperCase()+'</td><td><strong>'+o.line+'</strong></td><td class="num">'+o.odds.toFixed(3)+'</td><td class="num" style="color:'+(o.ev>=0?'var(--success)':'var(--error)')+'">'+(o.ev>=0?'+':'')+(o.ev*100).toFixed(1)+'%</td><td class="num">'+(o.cover*100).toFixed(0)+'%</td><td class="num">'+o.confidence+'</td></tr>';
+      optsHTML+='<tr'+(i===0?' class="best"':'')+'><td>'+(i+1)+'</td><td>'+o.side.charAt(0).toUpperCase()+'</td><td><strong>'+o.line+'</strong></td><td class="num">'+o.odds.toFixed(3)+'</td><td class="num" style="color:'+(o.ev>=0?'var(--success)':'var(--error)')+'">'+dispEv(o.ev)+'</td><td class="num">'+(o.cover*100).toFixed(0)+'%</td><td class="num">'+o.confidence+'</td></tr>';
     });
     optsHTML+='</table>';
   }
@@ -1211,7 +1214,7 @@ function viewHistory(id){
       <div class="pick"><strong>${sideLabel} ${item.pick}</strong> @ ${item.odds.toFixed(3)}</div>
       <div class="meta">
         <span class="${confCls}">${item.confidence}</span>
-        <span>EV: ${item.ev>=0?'+':''}${(item.ev*100).toFixed(1)}%</span>
+        <span>EV: ${dispEv(item.ev)}</span>
         <span>Est. Cover: ${item.cover?((item.cover*100).toFixed(0)+'%'):'--'}</span>
         <span>Result: ${item.result==='pending'?'Pending':item.result==='won'?'Won':item.result==='draw'?'Draw/Push':'Lost'}</span>
       </div>
