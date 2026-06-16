@@ -1001,8 +1001,6 @@ function analyze(){
   if(!bets.length){alert('Enter at least one handicap line with odds.');return}
 
   const sorted=bets.sort((x,y)=>y.score-x.score);
-
-  const sorted=bets.sort((x,y)=>y.score-x.score);
   renderResults(teamA,teamB,sorted,sorted[0]);
   saveToHistory(teamA,teamB,sorted[0],sorted,sorted[0].reasoning);
   hideTeamInfo();
