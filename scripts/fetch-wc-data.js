@@ -254,17 +254,8 @@ async function main(){
     const raw=parseFloat(vMatch[1]);
     const next=(raw+0.01).toFixed(2);
     html=html.replace(/const VERSION = "[\d.]+"/,'const VERSION = "'+next+'"');
-    html=html.replace(
-      /<strong>v[\d.]+<\/strong><\/span> — /,
-      '<strong>v'+next+'</strong></span> — '
-    );
+    html=html.replace(/<strong>v[\d.]+<\/strong>/,'<strong>v'+next+'</strong>');
     // Add version history entry
-    const today=new Date().toLocaleString('en-US',{month:'short',day:'numeric',timeZone:'Asia/Kuala_Lumpur'});
-    const statsMsg='Live match data: '+(finished.length*2)+' team-matches processed';
-    const histRe=/(const VERSION_HISTORY = \[[\s\S]*?)\];/;
-    if(histRe.test(html)){
-      html=html.replace(histRe,'$1,{v:"'+next+'",date:"'+today+'",msg:"'+statsMsg+'"}];');
-    }
     verStr=next;
   }
 

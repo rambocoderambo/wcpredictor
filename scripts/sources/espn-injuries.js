@@ -24,10 +24,10 @@ export async function getInjuries(){
         if(block.indexOf('</h3>')<0)continue;
         const h3Content=block.substring(0,block.indexOf('</h3>'));
 
-        // Extract player name: look for <a> tag with player-guid (player link)
+        // Extract player name: match ALL <a> tags with data-player-guid (ESPN sometimes splits names across adjacent tags)
         let player='';
-        const aMatch=h3Content.match(/<a[^>]*data-player-guid[^>]*>([^<]+)<\/a>/i);
-        if(aMatch) player=aMatch[1].trim();
+        const aTags=[...h3Content.matchAll(/<a[^>]*data-player-guid[^>]*>([^<]+)<\/a>/gi)];
+        for(const t of aTags) player+=t[1].trim();
         if(!player){
           // Fallback: text before comma, excluding team logo alt text
           const textParts=h3Content.split(/<[^>]*>/g).map(p=>p.trim()).filter(p=>p.length>1);
