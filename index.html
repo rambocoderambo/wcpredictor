@@ -1000,13 +1000,7 @@ function analyze(){
   }
   if(!bets.length){alert('Enter at least one handicap line with odds.');return}
 
-  // Enforce monotonicity: bigger abs line must not have higher EV than smaller (same side)
-  for(const side of['home','away']){
-    const same=bets.filter(x=>x.side===side).sort((a,b)=>Math.abs(parseFloat(b.line))-Math.abs(parseFloat(a.line)));
-    for(let i=1;i<same.length;i++){
-      if(same[i-1].ev>same[i].ev)same[i-1].ev=same[i].ev;
-    }
-  }
+  const sorted=bets.sort((x,y)=>y.score-x.score);
 
   const sorted=bets.sort((x,y)=>y.score-x.score);
   renderResults(teamA,teamB,sorted,sorted[0]);
@@ -1103,6 +1097,7 @@ function renderResults(teamA,teamB,opts,best){
         <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value."><span class="ti">ⓘ</span>EV: ${dispEv(best.ev,1)}</span>
         <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line — calculated via Poisson Monte Carlo (5,000 simulations)"><span class="ti">ⓘ</span>Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
         <span title="Fair odds: the minimum odds needed for this bet to break even (1 ÷ cover %). Your odds should be higher than this."><span class="ti">ⓘ</span>Fair: ${(1/best.cover).toFixed(3)}</span>
+        <span title="Edge = (Your Odds ÷ Fair Odds) − 1. Positive means your odds beat fair value. This is why bigger lines can have higher EV — you entered better odds."><span class="ti">ⓘ</span>Edge: ${best.odds>=(1/best.cover)?'+':''}${((best.odds/(1/best.cover)-1)*100).toFixed(0)}%</span>
         <span title="Composite Score: weighted blend of EV, team form, matchup context, and odds value (higher = stronger pick)"><span class="ti">ⓘ</span>Score: ${(best.score*100).toFixed(0)}%</span>
       </div>
     </div>
@@ -1111,13 +1106,14 @@ function renderResults(teamA,teamB,opts,best){
     ${opts.filter(o=>o.ev>1).length>=1?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:.78rem;text-align:center;color:var(--muted)">⚠ EV &gt;100% detected — odds likely wrong or cover estimate unreliable for extreme lines. Recheck your inputs.</div>':''}
     ${matchHTML}
     <table class="options-table">
-      <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
+      <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Edge = (Odds - Fair) / Fair — how much better your odds are vs fair value">Edge</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
       ${opts.map((o,i)=>`
         <tr${i===0?' class="best"':''}>
           <td>${i+1}</td><td>${o.idx}</td><td>${o.side==='home'?'H':'A'}</td>
           <td><strong>${o.side==='home'?teamA:teamB} ${o.line}</strong></td>
           <td class="num">${o.odds.toFixed(3)}</td>
           <td class="num" style="color:var(--muted);font-size:.7rem">${o.fairOdds.toFixed(3)}</td>
+          <td class="num" style="color:${o.odds>=o.fairOdds?'var(--success)':'var(--error)'}">${o.odds>=o.fairOdds?'+':''}${((o.odds/o.fairOdds-1)*100).toFixed(0)}%</td>
           <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${dispEv(o.ev,1)}</td>
           <td class="num">${(o.cover*100).toFixed(0)}%</td>
           <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
