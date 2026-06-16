@@ -179,7 +179,11 @@ return clamp(s, 0, 1)</pre>
 3. Cover = (fullWins × 1 + halfWins × 0.5) / 5,000
 
 4. Blend with Kimi if fewer than 2 WC matches played<br>
-5. <strong>50% regression to 50/50:</strong> cover = 0.5 + (cover - 0.5) × 0.5<br>
+5. <strong>50% regression to 50/50:</strong> cover = 0.5 + (cover - 0.5) × 0.5 (group) or × 0.75 (knockout)<br>
+   → Only applies when cover > 50% (favorite side). Low covers preserved unchanged.<br>
+6. <strong>Exponential decay for large handicaps (v1.13+):</strong> cover × max(0.1, 1 - (absLine-1) × 0.18)<br>
+   → Only for favorites (n<0). Ensures -2 has lower cover than -1.75, -3 lower than -2.5, etc.<br>
+   → Starts at absLine=1.0 (no decay for -0.75 and below).<br>
    → Prevents overconfidence. A 90% raw estimate becomes 70%. A 70% becomes 60%.<br>
    → Standard calibration technique used by professional bettors.</pre>
 
@@ -291,6 +295,17 @@ node scripts/fetch-wc-data.js
     · EV display capped at ±99% with unrealistic odds warnings<br>
     · Kimi blend reduced from 40% to 15% for early games<br>
     · Knockout stage regression (75%) — stronger than group stage (50%)
+  </td>
+</tr>
+<tr>
+  <td><strong>v1.13–1.14 — Line Fixes</strong></td>
+  <td>
+    · General line handling for all handicaps >2 — integer, .25, .5, .75 all correct<br>
+    · Exponential cover decay for large handicaps (18%/unit, starts at -1)<br>
+    · Decay only applies to favorites — not inverted by awayCov flip<br>
+    · Upper clamp raised from 0.95 to 0.99 — lets decay differentiate adjacent lines<br>
+    · High-EV warning banners with subtle surface style (no orange)<br>
+    · Fixed absLine scope bug (was block-scoped inside for loop)
   </td>
 </tr>
 </table>
@@ -425,6 +440,6 @@ node scripts/fetch-wc-data.js
 <tr><td>Penalty events (structured)</td><td>Only available from paid APIs</td></tr>
 </table>
 
-<p style="color:#9aadad;font-size:.8rem;margin-top:2rem">Generated for WC Predictor v1.10 · 12 Jun 2026 · EV caps, knockout regression, Kimi blend 15%, high-EV warnings</p>
+<p style="color:#9aadad;font-size:.8rem;margin-top:2rem">Generated for WC Predictor v1.10 · 12 Jun 2026 · Line decays, general line handling, decay only for favorites</p>
 
 </div></body></html>
