@@ -812,13 +812,14 @@ function estCover(teamA,teamB,line){
   const lamA=Math.max(.2,(gsA/avgGoal)*(gcB/avgGoal)*avgGoal+homeAdj);
   const lamB=Math.max(.2,(gsB/avgGoal)*(gcA/avgGoal)*avgGoal);
 
+  const absLine=Math.abs(n);
+
   // Simulate matches
   const trials=5000;
   let coverCount=0,drawCount=0,pushCount=0;
   for(let i=0;i<trials;i++){
     const gA=poisson(lamA),gB=poisson(lamB);
     const gd=gA-gB;
-    const absLine=Math.abs(n);
     const isFav=n<0; // negative = team A is favorite (giving goals)
 
     if(isFav){
