@@ -879,9 +879,9 @@ function estCover(teamA,teamB,line){
   const matchP=getMatchPred(teamA,teamB);
   if(matchP!==null&&wcA+wcB<2){
     const blended=matchP*0.15+cover*0.85;
-    return clamp(blended,.05,.95);
+    return clamp(blended,.03,.99);
   }
-  return clamp(cover,.05,.95);
+  return clamp(cover,.03,.99);
 }
 
 function awayCov(homeP){return 1-homeP}
