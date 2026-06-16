@@ -116,7 +116,6 @@ input[type=number]{-moz-appearance:textfield}
     <div class="sub">Asian handicap analysis &amp; prediction engine based off</div>
     <div class="sub"><a href="https://x.com/Kimi_Moonshot/status/2064311212243120459" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi to predict all 104 World Cup matches</a>.</div>
     <div class="sub"><a href="https://gtfehbkpbwzco.kimi.page" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">Kimi's Agent Swarm coordinates 300 sub-agents to reason in parallel</a> · 277-page report</div>
-    <div class="sub"><a href="https://t.me/niuxiongjiangqiuhengheng" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none">SMV Go Live</a></div>
     <div id="syncBar" style="display:none;margin-top:.6rem;padding:.35rem .6rem;background:var(--primary);color:#131818;border-radius:6px;font-size:.7rem;font-weight:600;align-items:center;gap:.4rem">
       <span>⏱</span><span style="font-weight:400;opacity:.7">Rambo Action · </span><span id="syncText">Last sync: —</span>
     </div>
@@ -837,7 +836,7 @@ function estCover(teamA,teamB,line){
       if(absLine<=.25){if(gd<0)coverCount++;else if(gd===0)drawCount++}
       else if(absLine<=.5){if(gd<0||gd===0)coverCount++}
       else if(absLine<=.75){if(gd<0)coverCount+=1;else if(gd===0)drawCount++}
-      else if(absLine<=1){if(gd<0||gd===0)coverCount++}
+      else if(absLine<=1){if(gd<0||gd===0)coverCount++;else if(gd===1)pushCount++}
       else if(absLine<=1.25){if(gd<=0)coverCount+=1;else if(gd===1)drawCount++}
       else if(absLine<=1.5){if(gd<=0)coverCount++}
       else if(absLine<=1.75){if(gd<=1)coverCount+=1;else if(gd===2)drawCount++}
@@ -848,7 +847,11 @@ function estCover(teamA,teamB,line){
 
   // Cover probability = (fullWins + halfWins) / total
   // Push = no P&L, half-win/half-loss counted as 0.5
-  const cover=(coverCount+drawCount*0.5)/trials;
+  let cover=(coverCount+drawCount*0.5)/trials;
+
+  // Regression to 50% — calibration against overconfidence
+  // 50% shrink: a 90% estimate becomes 70%, a 70% becomes 60%
+  cover=.5+(cover-.5)*.5;
 
   // Blend with Kimi prediction for stability when WC data is scarce
   const matchP=getMatchPred(teamA,teamB);
