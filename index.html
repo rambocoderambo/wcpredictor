@@ -851,9 +851,9 @@ function estCover(teamA,teamB,line){
   // Push = no P&L, half-win/half-loss counted as 0.5
   let cover=(coverCount+drawCount*0.5)/trials;
 
-  // Regression to 50% — calibration against overconfidence
-  // 50% shrink: a 90% estimate becomes 70%, a 70% becomes 60%
-  cover=.5+(cover-.5)*.5;
+  // Regression to 50% — only for covers above 50% (favorite side)
+  // High handicaps already have low raw cover — don't inflate them
+  if(cover>.5)cover=.5+(cover-.5)*.5;
 
   // Blend with Kimi prediction for stability when WC data is scarce
   const matchP=getMatchPred(teamA,teamB);
