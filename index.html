@@ -871,6 +871,9 @@ function estCover(teamA,teamB,line){
     cover=.5+(cover-.5)*(1-regress);
   }
 
+  // Hard cap: larger handicaps always get lower cover — exponential decay
+  if(absLine>=1.5)cover*=Math.max(.15,1-(absLine-1.5)*.12);
+
   // Blend with Kimi prediction for stability when WC data is scarce — reduced weight
   const matchP=getMatchPred(teamA,teamB);
   if(matchP!==null&&wcA+wcB<2){
