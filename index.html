@@ -734,7 +734,7 @@ function imp(odds){return 1/odds}
 function ev(w,odds){return w*odds-1}
 function clamp(v,m,M){return Math.max(m,Math.min(M,v))}
 function dispEv(v,showSign){var p=clamp(v*100,-99,99);return (showSign&&p>0?'+':'')+p.toFixed(1)+'%'}
-function decayCover(c,a){return a>=1?c*Math.max(.1,1-(a-1)*.18):c}
+function decayCover(c,a){return a>=1?c*Math.max(.05,1-(a-1)*.3):c}
 
 function attackScore(team){
   const d=gt(team);if(!d)return.5;
@@ -999,6 +999,14 @@ function analyze(){
     }
   }
   if(!bets.length){alert('Enter at least one handicap line with odds.');return}
+
+  // Enforce monotonicity: bigger abs line must not have higher EV than smaller (same side)
+  for(const side of['home','away']){
+    const same=bets.filter(x=>x.side===side).sort((a,b)=>Math.abs(parseFloat(b.line))-Math.abs(parseFloat(a.line)));
+    for(let i=1;i<same.length;i++){
+      if(same[i-1].ev>same[i].ev)same[i-1].ev=same[i].ev;
+    }
+  }
 
   const sorted=bets.sort((x,y)=>y.score-x.score);
   renderResults(teamA,teamB,sorted,sorted[0]);
