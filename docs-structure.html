@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WC Predictor — Project Documentation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#131818;color:#d9dfdf;padding:2rem;line-height:1.7}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:1.4rem;margin-bottom:.25rem;color:#e3e8e8}
+h2{font-size:1.1rem;margin:2rem 0 .5rem;color:#5ecc9a;border-bottom:1px solid #2a3535;padding-bottom:.3rem}
+h3{font-size:.95rem;margin:1.25rem 0 .35rem;color:#d4a76a}
+h4{font-size:.85rem;margin:1rem 0 .25rem;color:#9aadad}
+p,li{font-size:.85rem;color:#c5cccc}
+code{font-family:ui-monospace,'SF Mono',monospace;font-size:.8rem;background:#1a2323;padding:.1rem .35rem;border-radius:3px;color:#d9dfdf}
+pre{background:#1a2323;padding:.75rem;border-radius:6px;overflow-x:auto;font-size:.75rem;line-height:1.5;border:1px solid #2a3535;margin:.5rem 0}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;font-size:.8rem;margin:.5rem 0}
+th,td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid #2a3535}
+th{color:#9aadad;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
+td{color:#c5cccc}
+.tag{display:inline-block;font-size:.65rem;padding:.1rem .4rem;border-radius:3px;margin-right:.3rem;font-weight:600}
+.tag-phase1{background:#2a4530;color:#5ecc9a}
+.tag-phase2{background:#45302a;color:#d4a76a}
+.tag-core{background:#2a3045;color:#8ab4e8}
+.tag{font-size:.65rem;padding:.12rem .4rem;border-radius:3px;font-weight:600;display:inline-block}
+.tag.v1{background:#2a4530;color:#5ecc9a}
+.tag.v2{background:#45302a;color:#d4a76a}
+.highlight{color:#5ecc9a;font-weight:600}
+.dim{color:#6b7a7a}
+.divider{margin:2rem 0;border:none;border-top:1px solid #2a3535}
+blockquote{border-left:3px solid #5ecc9a;padding:.5rem .75rem;margin:.5rem 0;background:#1a2323;border-radius:0 6px 6px 0;font-size:.82rem;color:#b8c5c5}
+</style></head>
+<body><div class="container">
+
+<h1>WC Predictor — Project Documentation</h1>
+<p style="color:#9aadad;margin-bottom:2rem">Asian handicap analysis engine for World Cup 2026 · 48 teams · 104 matches</p>
+
+<h2>1. Project Structure</h2>
+<pre>
+wcpredictor/
+  index.html                          ← Single-page app (all CSS/JS/data inline)
+  package.json                        ← ES module config for GitHub Action
+  wc2026-logo.jpg                     ← World Cup logo in header
+  PRODUCT.md                          ← Design context (impeccable skill)
+  .gitignore
+  .github/workflows/
+    wc-data-refresh.yml               ← GitHub Action: cron 6PM/12AM GMT+8
+  scripts/
+    fetch-wc-data.js                  ← Main orchestrator
+    team-mapping.js                   ← Team name → API ID maps
+    update-index.js                   ← Rewrites LIVE_DATA + bumps version
+    sources/
+      api-football.js                 ← Fixtures, stats, events, injuries
+      sofascore.js                    ← H2H events, match stats
+      football-data.js                ← Fallback fixture data
+  tasks/
+    lessons.md                        ← Session lessons log
+    todo.md                           ← (planned)
+</pre>
+
+<hr class="divider">
+
+<h2>2. Data Architecture</h2>
+
+<h3>2.1 Static Data (Phase 1 — Kimi Report)</h3>
+<p>All 48 teams stored in <code>TEAM_DATA</code> — never modified. From Kimi's 277-page report.</p>
+<table>
+<tr><th>Field</th><th>Type</th><th>Example</th><th>Source</th></tr>
+<tr><td><code>g</code></td><td>string</td><td>"A"</td><td>Group letter</td></tr>
+<tr><td><code>p</code></td><td>number</td><td>82</td><td>Group qual % (Table 4.x)</td></tr>
+<tr><td><code>elo</code></td><td>number</td><td>1770</td><td>Elo rating (Table 1.4)</td></tr>
+<tr><td><code>fifaRank</code></td><td>number</td><td>15</td><td>FIFA ranking</td></tr>
+<tr><td><code>wr</code></td><td>number</td><td>.58</td><td>Win rate</td></tr>
+<tr><td><code>gs</code></td><td>number</td><td>1.5</td><td>Goals scored/game</td></tr>
+<tr><td><code>gc</code></td><td>number</td><td>.9</td><td>Goals conceded/game</td></tr>
+<tr><td><code>ah</code></td><td>number</td><td>.5</td><td>Asian handicap cover rate</td></tr>
+<tr><td><code>qual</code></td><td>string</td><td>"82%"</td><td>Qual prob formatted</td></tr>
+<tr><td><code>injuries</code></td><td>string</td><td>"Jimenez fit..."</td><td>Injury notes</td></tr>
+<tr><td><code>cards</code></td><td>number</td><td>1.9</td><td>Yellow cards avg</td></tr>
+<tr><td><code>reds</code></td><td>number</td><td>0</td><td>Red cards</td></tr>
+<tr><td><code>form</code></td><td>string</td><td>"W-D-W-L-D"</td><td>Recent form</td></tr>
+<tr><td><code>np</code></td><td>string</td><td>"Host. All 3..."</td><td>Kimi analysis narrative</td></tr>
+</table>
+
+<h3>2.2 Live Data <span class="tag v2">v1.1</span></h3>
+<p><code>LIVE_DATA</code> — starts empty, filled by GitHub Action each run. WC match data only.</p>
+<table>
+<tr><th>Field</th><th>Type</th><th>Description</th></tr>
+<tr><td><code>wcForm</code></td><td>string</td><td>WC-only form (W-D-L) — last 10 matches</td></tr>
+<tr><td><code>wcGs</code></td><td>number</td><td>Total goals scored in WC</td></tr>
+<tr><td><code>wcGc</code></td><td>number</td><td>Total goals conceded in WC</td></tr>
+<tr><td><code>wcWr</code></td><td>number</td><td>WC win rate</td></tr>
+<tr><td><code>wcAh</code></td><td>number</td><td>WC AH cover rate</td></tr>
+<tr><td><code>wcMatches</code></td><td>number</td><td>Matches played in WC</td></tr>
+<tr><td><code>wcCards</code></td><td>number</td><td>Total yellow cards</td></tr>
+<tr><td><code>wcReds</code></td><td>number</td><td>Total red cards</td></tr>
+<tr><td><code>wcPossession</code></td><td>number</td><td>Avg possession %</td></tr>
+<tr><td><code>wcShots</code></td><td>number</td><td>Total shots</td></tr>
+<tr><td><code>wcShotsConceded</code></td><td>number</td><td>Total shots faced</td></tr>
+<tr><td><code>wcGkSaves</code></td><td>number</td><td>Total GK saves</td></tr>
+<tr><td><code>wcFouls</code></td><td>number</td><td>Total fouls committed</td></tr>
+<tr><td><code>wcOffsides</code></td><td>number</td><td>Total offsides</td></tr>
+<tr><td><code>wcPensAwarded</code></td><td>number</td><td>Total penalties awarded</td></tr>
+<tr><td><code>wcLateGoals</code></td><td>number</td><td>Goals scored after 75'</td></tr>
+<tr><td><code>wcCleanSheets</code></td><td>number</td><td>Clean sheets</td></tr>
+<tr><td><code>wcRestDays</code></td><td>number</td><td>Rest days since last match</td></tr>
+<tr><td><code>wcH2h</code></td><td>object|null</td><td>H2H record vs opponent</td></tr>
+<tr><td><code>wcFormation</code></td><td>number</td><td>Formation stability score</td></tr>
+</table>
+<p><code>gt(name)</code> merges TEAM_DATA + LIVE_DATA — live fields override static ones automatically.</p>
+
+<hr class="divider">
+
+<h2>3. Prediction Engine</h2>
+
+<h3>3.1 Score Formula (8 factors)</h3>
+<pre>
+finalScore = EV * 0.25                          ← Expected value
+            + formScore * 0.10                    ← WC form (W/D/L)
+            + attackScore * 0.15                  ← Shot efficiency + possession + pens
+            + defScore * 0.15                     ← Shots conceded + clean sheets + GK saves
+            + disciplineScore * 0.10              ← YC + RC + fouls
+            + ctxScore * 0.10                     ← Elo diff + cards + form comparison
+            + lateScore * 0.10                    ← Late goals (75'+) 
+            + oddsScore * 0.05                    ← Odds vs implied probability
+            + divBonus                            ← Market divergence (max +5%)
+            + champBonus                          ← Title probability (max +5%)
+</pre>
+
+<h3>3.2 Scoring Functions <span class="tag v2">v1.1</span></h3>
+
+<h4>attackScore(team)</h4>
+<pre>s = 0.5
+  + clamp(shotEfficiency * 5, 0, 0.15)     ← goals/shot ratio
+  + clamp((possession - 45) / 100, 0, 0.1)  ← possession above 45%
+  + clamp(pensAwarded/matches * 0.1, 0, 0.05) ← penalties drawn
+return clamp(s, 0, 1)</pre>
+
+<h4>defScore(team)</h4>
+<pre>s = 0.5
+  - clamp(shotsConcededPerG / 30, 0, 0.15)   ← fewer shots conceded = better
+  + clamp(cleanSheetPct * 0.3, 0, 0.1)        ← clean sheet rate
+  + clamp(savesPerG / 10, 0, 0.05)            ← goalkeeper saves
+return clamp(s, 0, 1)</pre>
+
+<h4>disciplineScore(team)</h4>
+<pre>s = 0.5
+  - clamp(ycPerG / 3, 0, 0.1)                 ← yellow card rate
+  - clamp(reds/matches * 0.15, 0, 0.1)         ← red cards
+  - clamp((foulsPerG - 10) / 10, 0, 0.05)      ← fouls above 10/game
+return clamp(s, 0, 1)</pre>
+
+<h4>lateScore(team)</h4>
+<pre>s = 0.5
+  + clamp(lateGoalPct * 0.5, 0, 0.15)          ← % of goals after 75'
+return clamp(s, 0, 1)</pre>
+
+<h4>ctxScore(teamA, teamB)</h4>
+<pre>s = 0.5
+  + clamp((eloA - eloB) / 400, 0, 0.2)        ← Elo advantage
+  - 0.1 if reds > 1                             ← red card penalty
+  + clamp(formScore(A) - formScore(B) * 0.15, -0.1, 0.1) ← form comparison
+return clamp(s, 0, 1)</pre>
+
+<hr class="divider">
+
+<h2>3.5 Cover Probability — Poisson Monte Carlo (v1.07+)</h2>
+<p><code>estCover(teamA, teamB, line)</code> — estimates chance (%) the selected team covers the Asian handicap line using <strong>5,000 Poisson simulations per match</strong>. Replaced the old arbitrary adjustment formula entirely.</p>
+
+<pre>1. Expected goals (λ) per team:
+     λA = (gsA / avgGoal) × (gcB / avgGoal) × avgGoal + homeAdv
+     λB = (gsB / avgGoal) × (gcA / avgGoal) × avgGoal
+     Uses LIVE_DATA WC goals when available, falls back to Kimi stats
+
+2. Simulate 5,000 matches via Poisson distribution:
+     gA ~ Poisson(λA), gB ~ Poisson(λB)
+     goalDiff = gA - gB
+     Check if goalDiff covers the handicap line
+
+3. Cover = (fullWins × 1 + halfWins × 0.5) / 5,000
+
+4. Blend with Kimi if fewer than 2 WC matches played<br>
+5. <strong>50% regression to 50/50:</strong> cover = 0.5 + (cover - 0.5) × 0.5<br>
+   → Prevents overconfidence. A 90% raw estimate becomes 70%. A 70% becomes 60%.<br>
+   → Standard calibration technique used by professional bettors.</pre>
+
+<p><strong>Asian handicap line rules (simulated):</strong></p>
+<pre>Line       | Favorite covers if       | Underdog covers if
+───────────┼──────────────────────────┼────────────────────
+0 (pk)     | win                      | win or draw
+-0.25      | win (half on draw)       | draw or win
+-0.5       | win                      | draw or win
+-0.75      | win by 2+ (half by 1)    | draw or win (half by 1)
+-1         | win by 2+ (push by 1)    | draw or win (push by 1)
+-1.25      | win by 2+ (half by 1)    | lose by ≤1 (half by 1)
+-1.5       | win by 2+                | lose by ≤1
+-1.75      | win by 3+ (half by 2)    | lose by ≤2 (half by 2)
+-2         | win by 3+ (push by 2)    | lose by ≤2 (push by 2)
+≥ -2.5     | win by ceil(absLine)     | lose by ≤ ceil(absLine)-1</pre>
+
+<h2>3.6 Expected Value &amp; Fair Odds</h2>
+<pre>EV = (Cover Probability × Decimal Odds) - 1
+Fair Odds = 1 / Cover Probability</pre>
+
+<p><strong>Reading results:</strong></p>
+<pre>Your Odds  |  Fair Odds  |  EV        | Verdict
+───────────┼─────────────┼────────────┼────────────────
+2.10       | 1.85        | +13.5%    | ✅ Good value
+1.85       | 1.85        | 0%        | ⚖️ Breakeven
+1.60       | 1.85        | -13.5%    | ❌ Bad value
+
+When ALL 6 bets are negative EV → ⚠ red warning banner: "Skip this match."
+The tool shows this automatically — no value means no bet.</pre>
+
+<hr class="divider">
+
+<h2>4. APIs & Data Flow <span class="tag v2">v1.1</span></h2>
+
+<table>
+<tr><th>API</th><th>Endpoint</th><th>Data</th><th>Auth</th></tr>
+<tr><td><strong>FIFA API</strong> (primary)</td><td><code>/v3/calendar/matches?idcompetition=17&idseason=285023</code><br><code>/v3/statistics/match/{id}</code><br><code>/v3/live/football/{comp}/{season}/{stage}/{match}</code></td><td>All 104 WC matches, scores, ball possession, tactics/formations</td><td>Free — no key</td></tr>
+<tr><td><strong>Football-data.org</strong> (fallback)</td><td><code>/v4/matches</code></td><td>Match results (fallback if FIFA API is down)</td><td>Free signup — API token in secrets</td></tr>
+</table>
+<p class="dim">Detailed stats (shots, cards, fouls, injuries) not available from free sources. Prediction engine uses Kimi TEAM_DATA as fallback via <code>gt()</code> merge.</p>
+
+<h3>Rambo Action Flow</h3>
+<pre>cron: 0 10,16 * * *   ← 6PM / 12AM GMT+8
+
+node scripts/fetch-wc-data.js
+  ├── 1. Read current index.html
+  ├── 2. Parse existing LIVE_DATA + WC_PROCESSED
+  ├── 3. Fetch all 104 WC matches (FIFA API — primary)
+  │    └── if FIFA fails → Football-data.org (fallback for today's results)
+  ├── 4. Filter to NEW finished matches (dedup via WC_PROCESSED)
+  ├── 5. Process each match:
+  │    ├── Form (W/D/L), goals scored/conceded
+  │    ├── Win rate, AH cover rate, clean sheets
+  │    ├── Possession (from FIFA API)
+  │    └── Formation stability (tactics data)
+  ├── 6. Write updated LIVE_DATA + bump version
+  └── 7. git commit + push → Vercel auto-deploys</pre>
+
+<hr class="divider">
+
+<h2>5. Version History</h2>
+
+<table>
+<tr><th>Version</th><th>Changes</th></tr>
+<tr>
+  <td><strong>v1.0 — Phase 1</strong></td>
+  <td>
+    Kimi Report Integration<br>
+    · 48 teams with full Kimi data (Elo, FIFA rank, form, injuries, cards)<br>
+    · 4-factor scoring engine: EV (30%) + form (20%) + context (20%) + odds (15%)<br>
+    · 3 handicap lines with 6 odds inputs<br>
+    · Dark theme · localStorage history · Zero external dependencies
+  </td>
+</tr>
+<tr>
+  <td><strong>v1.01–1.05 — Phase 2</strong></td>
+  <td>
+    Rambo Action — Live WC Data Layer<br>
+    · 11-factor scoring engine (8 linear + 3 non-linear)<br>
+    · LIVE_DATA overlay merged with static TEAM_DATA via gt()<br>
+    · FIFA API + LiveScore.com (stats, incidents, H2H) + Football-data.org (fallback)<br>
+    · Match stats: shots, cards, fouls, corners, GK saves, possession<br>
+    · Goal timestamps, late goals, first/second half splits<br>
+    · H2H history, group standings, ESPN injuries<br>
+    · Non-linear scoring: matchup interactions, motivation thresholds, fatigue saturation
+  </td>
+</tr>
+<tr>
+  <td><strong>v1.06 — Polish</strong></td>
+  <td>
+    · Visual stat bars (animated, color-coded) in team info panel<br>
+    · Team comparison view — side-by-side stats when both teams selected<br>
+    · Prediction accuracy tracking: P&amp;L, HIGH win rate, streaks<br>
+    · Color-coded injury badges (OUT red / DOUBT amber / LIKELY green)<br>
+    · Results panel fade-in animation<br>
+    · Export with versioned filename + improved import<br>
+    · Mobile responsive improvements
+  </td>
+</tr>
+<tr>
+  <td><strong>v1.07+ — v1.12 — Calibration</strong></td>
+  <td>
+    · Poisson Monte Carlo cover estimation (5,000 sims per line)<br>
+    · Fair Odds column (1/cover) to identify value, all -EV skip warning<br>
+    · Draw/Push result option, handicap sign fix<br>
+    · 50% regression to 50/50 — calibrates overconfident covers<br>
+    · Asymmetric regression: only high covers (>50%) shrunk; low covers preserved<br>
+    · EV display capped at ±99% with unrealistic odds warnings<br>
+    · Kimi blend reduced from 40% to 15% for early games<br>
+    · Knockout stage regression (75%) — stronger than group stage (50%)
+  </td>
+</tr>
+</table>
+
+<hr class="divider">
+
+<h2>6. Scoring Weights Comparison</h2>
+
+<table>
+<tr><th>Factor</th><th>v1.0</th><th>v1.04</th></tr>
+<tr><td>Expected Value (EV)</td><td>30%</td><td>25%</td></tr>
+<tr><td>Form Score</td><td>20%</td><td>10%</td></tr>
+<tr><td>Context Score</td><td>20%</td><td>10%</td></tr>
+<tr><td>Attack Score</td><td>—</td><td>15%</td></tr>
+<tr><td>Defense Score</td><td>—</td><td>15%</td></tr>
+<tr><td>Discipline Score</td><td>—</td><td>10%</td></tr>
+<tr><td>Late Goals Score</td><td>—</td><td>10%</td></tr>
+<tr><td>Odds Score</td><td>15%</td><td>5%</td></tr>
+<tr><td>Divergence Bonus</td><td>+max 5%</td><td>+max 5%</td></tr>
+<tr><td>Champ Prob Bonus</td><td>+max 5%</td><td>+max 5%</td></tr>
+</table>
+
+<hr class="divider">
+
+<h2>7. Prediction Engine — How It Works</h2>
+
+<h3>7.1 Cover Probability (estCover)</h3>
+<p>Estimates the chance (%) a team covers a given Asian handicap line:</p>
+<pre>cover = Kimi match prediction blend × 40%   ← Kimi head-to-head analysis
+      + Elo-based win prob × 30%            ← rating gap
+      + Base stats × 30%                    ← win rate, goals, AH cover
+      + Host advantage boost                ← if host nation
+      - Squad age penalty                   ← if avg age &gt; 28.5
+      + Elite manager bonus                 ← Ancelotti, Deschamps, etc.
+      + Handicap line adjustment            ← line vs expected goal diff
+      - Upset probability factor            ← reduces confidence in known upsets</pre>
+
+<h3>7.2 Composite Score — v1.06 Weights</h3>
+<p>Ranks all 6 bets (3 handicap lines × 2 sides) to find the best pick:</p>
+<pre>finalScore = EV × 25%           ← Expected value (cover × odds − 1)
+            + formScore × 10%    ← WC form (W/D/L)
+            + attackScore × 12%  ← shot efficiency + possession
+            + defScore × 12%     ← shots conceded + clean sheets + GK saves
+            + discScore × 8%     ← yellow/red cards + fouls
+            + ctxScore × 8%      ← Elo diff + cards + form comparison
+            + lateScore × 8%     ← goals after 75'
+            + matchupScore × 8%  ← attack vs defense interaction (non-linear)
+            + motScore × 6%      ← group stage must-win scenarios (non-linear)
+            + fatigue × 3%       ← match congestion (non-linear)
+            + oddsScore × 5%     ← odds vs implied probability
+            + divBonus            ← market undervaluation (max +5%)
+            + champBonus          ← title probability (max +5%)</pre>
+
+<h3>7.3 Scoring Functions (v1.04)</h3>
+
+<h4>attackScore(team)</h4>
+<pre>s = 0.5
+  + clamp(shotEff × 5, 0, 0.15)      ← goals / totalShots
+  + clamp((poss − 45) / 100, 0, 0.1)  ← possession above 45%
+  + clamp(pens/matches × 0.1, 0, 0.05) ← penalties drawn
+return clamp(s, 0, 1)</pre>
+
+<h4>defScore(team)</h4>
+<pre>s = 0.5
+  − clamp(shotsConcPerG / 20, 0, 0.15)  ← shots conceded
+  + clamp(cleanPct × 0.3, 0, 0.1)        ← clean sheet rate
+  + clamp(savesPerG / 10, 0, 0.05)       ← GK saves
+return clamp(s, 0, 1)</pre>
+
+<h4>disciplineScore(team)</h4>
+<pre>s = 0.5
+  − clamp(ycPerG / 3, 0, 0.1)              ← yellow cards
+  − clamp(reds/matches × 0.15, 0, 0.1)     ← red cards
+  − clamp((foulsPerG − 10) / 10, 0, 0.05)  ← fouls above 10/game
+return clamp(s, 0, 1)</pre>
+
+<h4>lateScore(team)</h4>
+<pre>s = 0.5
+  + clamp(lateGoalPct × 0.5, 0, 0.15)     ← % of goals after 75'
+return clamp(s, 0, 1)</pre>
+
+<h4>ctxScore(teamA, teamB)</h4>
+<pre>s = 0.5
+  + clamp((eloA − eloB) / 400, 0, 0.2)   ← Elo advantage
+  − 0.1 if reds &gt; 1                       ← red card penalty
+  + clamp(formScore(A) − formScore(B) × 0.15, −0.1, 0.1) ← form comparison
+return clamp(s, 0, 1)</pre>
+
+<h3>7.4 Does It Favor Favorites?</h3>
+<p><strong>Short answer: often, but not blindly.</strong></p>
+<p>The three main cover inputs (Kimi predictions, Elo, base stats) all correlate with team strength, so stronger teams naturally score higher. However:</p>
+<ul>
+  <li><strong>EV (25%) is the largest factor</strong> — a -0.5 favorite at 1.20 odds has poor EV (−3%) and ranks low. A +0.5 underdog at 4.00 odds with +12% EV can outrank it.</li>
+  <li><strong>When an underdog beats a favorite:</strong> poor odds for the favorite, strong underlying underdog stats (defense, discipline), late goal tendency, or known upset scenarios.</li>
+  <li><strong>The upset probability factor</strong> directly reduces cover confidence for favorites in flagged upset matchups.</li>
+  <li><strong>All 6 bets are ranked</strong> — the best pick isn't always the favorite side.</li>
+</ul>
+
+<hr class="divider">
+
+<h2>8. Data Sources &amp; Data Flow</h2>
+
+<table>
+<tr><th>API</th><th>Data</th><th>Auth</th></tr>
+<tr><td><strong>FIFA API</strong> (primary)</td><td>All 104 WC matches, scores, ball possession, tactics/formations</td><td>Free — no key</td></tr>
+<tr><td><strong>LiveScore.com</strong> (stats, incidents, H2H)</td><td>Shots on/off target, blocked shots, possession, corners, offsides, fouls, yellow/red cards, GK saves, goal timestamps, late goals, H2H history, scores by period</td><td>Free — scraped HTML</td></tr>
+<tr><td><strong>Football-data.org</strong> (fallback)</td><td>Match results if FIFA API is down</td><td>Free signup — API token</td></tr>
+</table>
+
+<h3>Rambo Action Flow</h3>
+<pre>cron: 0 4,10,16,22 * * *   ← 6AM / 12PM / 6PM / 12AM GMT+8
+
+node scripts/fetch-wc-data.js
+  ├── 1. Read index.html (LIVE_DATA, WC_PROCESSED, LS_PROCESSED)
+  ├── 2. Fetch all 104 WC matches (FIFA API)
+  │    └── if fails → Football-data.org fallback
+  ├── 3. Filter NEW finished matches (dedup via WC_PROCESSED)
+  ├── 4. Process FIFA match data: form, goals, possession, formations
+  ├── 5. Scrape LiveScore for each new match:
+  │    ├── Stats page → shots, cards, fouls, corners, GK saves
+  │    ├── Summary page → goal timestamps, late goals, half splits
+  │    └── H2H page → head-to-head history vs opponent
+  ├── 6. Update LIVE_DATA + bump version + add version history
+  └── 7. git commit + push → Vercel auto-deploys</pre>
+
+<h2>9. Data Gaps (Not Available from Free Sources)</h2>
+<table>
+<tr><th>Data</th><th>Why Missing</th></tr>
+<tr><td>xG (Expected Goals)</td><td>All sources paid or blocked (Opta/StatsPerform)</td></tr>
+<tr><td>Injuries</td><td>All sources paid or blocked</td></tr>
+<tr><td>Player tracking data</td><td>Opta/StatsPerform only</td></tr>
+<tr><td>Penalty events (structured)</td><td>Only available from paid APIs</td></tr>
+</table>
+
+<p style="color:#9aadad;font-size:.8rem;margin-top:2rem">Generated for WC Predictor v1.10 · 12 Jun 2026 · EV caps, knockout regression, Kimi blend 15%, high-EV warnings</p>
+
+</div></body></html>
