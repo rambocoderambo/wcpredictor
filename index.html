@@ -832,7 +832,12 @@ function estCover(teamA,teamB,line){
       else if(absLine<=1.5) {if(gd>=2)coverCount++}
       else if(absLine<=1.75){if(gd>=3)coverCount+=1;else if(gd===2)drawCount++}
       else if(absLine<=2)  {if(gd>=3)coverCount+=1;else if(gd===2)pushCount++}
-      else {if(gd>=Math.ceil(absLine))coverCount++}
+      else {
+        const req=Math.ceil(absLine),frac=absLine%1;
+        if(frac===0){if(gd>req)coverCount++;else if(gd===req)pushCount++}
+        else if(frac===0.5){if(gd>=req)coverCount++}
+        else{if(gd>req)coverCount++;else if(gd===req)drawCount++}
+      }
     } else if(n===0){
       if(gd>0)coverCount++;else if(gd===0)pushCount++
     } else {
@@ -845,7 +850,12 @@ function estCover(teamA,teamB,line){
       else if(absLine<=1.5){if(gd<=0)coverCount++}
       else if(absLine<=1.75){if(gd<=1)coverCount+=1;else if(gd===2)drawCount++}
       else if(absLine<=2){if(gd<=1)coverCount+=1;else if(gd===2)pushCount++}
-      else {if(gd<=Math.ceil(absLine)-1)coverCount++}
+      else {
+        const req=Math.ceil(absLine),frac=absLine%1;
+        if(frac===0){if(gd<req)coverCount++;else if(gd===req)pushCount++}
+        else if(frac===0.5){if(gd<=req-1)coverCount++}
+        else{if(gd<req)coverCount++;else if(gd===req)drawCount++}
+      }
     }
   }
 
