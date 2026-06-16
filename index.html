@@ -872,8 +872,9 @@ function estCover(teamA,teamB,line){
     cover=.5+(cover-.5)*(1-regress);
   }
 
-  // Hard cap: larger handicaps always get lower cover — exponential decay
-  if(absLine>=1)cover*=Math.max(.1,1-(absLine-1)*.18);
+  // Hard cap: larger handicaps always get lower cover — only for favorites (n<0)
+  // Underdogs (receiving goals) are easier to cover at bigger lines, so decay doesn't apply
+  if(n<0&&absLine>=1)cover*=Math.max(.1,1-(absLine-1)*.18);
 
   // Blend with Kimi prediction for stability when WC data is scarce — reduced weight
   const matchP=getMatchPred(teamA,teamB);
