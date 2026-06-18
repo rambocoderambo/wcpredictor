@@ -1133,7 +1133,7 @@ function renderResults(teamA,teamB,opts,best){
           <td class="num" style="color:${o.odds>=o.fairOdds?'var(--success)':'var(--error)'}">${o.odds>=o.fairOdds?'+':''}${((o.odds/o.fairOdds-1)*100).toFixed(0)}%</td>
           <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${dispEv(o.ev,1)}</td>
           <td class="num">${(o.cover*100).toFixed(0)}%</td>
-          <td class="num" style="font-weight:${i===0?'700':'400'};color:${i===0?'var(--primary)':'var(--ink)'}" title="22% EV + 12% attack + 12% def + 8% form + 8% ctx + 8% late + 8% matchup + 6% mot + 3% fatigue + 5% odds + bonuses">${(o.score*100).toFixed(0)}%</td>
+          <td class="num" style="font-weight:${i===0?'700':'400'};color:${i===0?'var(--primary)':'var(--ink)'}" title="Composite score ranking: blends EV (22%) + attack (12%) + defense (12%) + form (8%) + context (8%) + late goals (8%) + matchup (8%) + motivation (6%) + fatigue (3%) + odds (5%) + bonuses. Higher = stronger pick.">${(o.score*100).toFixed(0)}%</td>
           <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
         </tr>`).join('')}
     </table>
@@ -1244,9 +1244,9 @@ function viewHistory(id){
   const el=$('results');
   let optsHTML='';
   if(item.opts&&item.opts.length){
-    optsHTML='<div class="tbl-wrap"><table class="options-table"><tr><th title="Ranking order"><span class="ti">ⓘ</span>#</th><th title="Side: H=Home, A=Away"><span class="ti">ⓘ</span>S</th><th title="The bet selection"><span class="ti">ⓘ</span>Bet</th><th class="num" title="Decimal odds"><span class="ti">ⓘ</span>Odds</th><th class="num" title="Expected Value — positive = value"><span class="ti">ⓘ</span>EV</th><th class="num" title="Cover probability — chance of covering the handicap"><span class="ti">ⓘ</span>Cov</th><th class="num" title="Composite Score"><span class="ti">ⓘ</span>Score</th><th class="num" title="Confidence level"><span class="ti">ⓘ</span>Conf</th></tr>';
+    optsHTML='<div class="tbl-wrap"><table class="options-table"><tr><th title="Ranking order"><span class="ti">ⓘ</span>#</th><th title="Side: H=Home, A=Away"><span class="ti">ⓘ</span>S</th><th title="The bet selection"><span class="ti">ⓘ</span>Bet</th><th class="num" title="Decimal odds"><span class="ti">ⓘ</span>Odds</th><th class="num" title="Expected Value — positive = value"><span class="ti">ⓘ</span>EV</th><th class="num" title="Cover probability — chance of covering the handicap"><span class="ti">ⓘ</span>Cov</th><th class="num" title="Composite Score — weighted blend of EV, attack, defense, form, context, late goals, matchup, motivation, fatigue, odds, and bonuses. Higher = stronger pick."><span class="ti">ⓘ</span>Score</th><th class="num" title="Confidence level"><span class="ti">ⓘ</span>Conf</th></tr>';
     item.opts.forEach((o,i)=>{
-      optsHTML+='<tr'+(i===0?' class="best"':'')+'><td>'+(i+1)+'</td><td>'+o.side.charAt(0).toUpperCase()+'</td><td><strong>'+o.line+'</strong></td><td class="num">'+o.odds.toFixed(3)+'</td><td class="num" style="color:'+(o.ev>=0?'var(--success)':'var(--error)')+'">'+dispEv(o.ev)+'</td><td class="num">'+(o.cover*100).toFixed(0)+'%</td><td class="num" style="color:var(--primary)">'+(o.score!==undefined?(o.score*100).toFixed(0)+'%':Math.max(0,((o.ev||0)*0.5+0.4)).toFixed(2)*100+'%*')+'</td><td class="num">'+o.confidence+'</td></tr>';
+      optsHTML+='<tr'+(i===0?' class="best"':'')+'><td>'+(i+1)+'</td><td>'+o.side.charAt(0).toUpperCase()+'</td><td><strong>'+o.line+'</strong></td><td class="num">'+o.odds.toFixed(3)+'</td><td class="num" style="color:'+(o.ev>=0?'var(--success)':'var(--error)')+'">'+dispEv(o.ev)+'</td><td class="num">'+(o.cover*100).toFixed(0)+'%</td><td class="num" style="color:var(--primary)" title="Composite score: blends EV + attack + defense + form + context + late goals + matchup + motivation + fatigue + odds + bonuses. Higher = stronger pick.">'+(o.score!==undefined?(o.score*100).toFixed(0)+'%':Math.max(0,((o.ev||0)*0.5+0.4)).toFixed(2)*100+'%')+'</td><td class="num">'+o.confidence+'</td></tr>';
     });
     optsHTML+='</table></div>';
   }
