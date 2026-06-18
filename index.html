@@ -1012,6 +1012,8 @@ function analyze(){
   if(!bets.length){alert('Enter at least one handicap line with odds.');return}
 
   const sorted=bets.sort((x,y)=>y.score-x.score);
+  // Verify descending order
+  for(let i=1;i<sorted.length;i++){if(sorted[i].score>sorted[i-1].score)console.warn('Sort error at',i)}
   renderResults(teamA,teamB,sorted,sorted[0]);
   saveToHistory(teamA,teamB,sorted[0],sorted,sorted[0].reasoning);
   hideTeamInfo();
