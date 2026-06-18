@@ -1111,7 +1111,7 @@ function renderResults(teamA,teamB,opts,best){
     ${opts.filter(o=>o.ev>1).length>=1?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:.78rem;text-align:center;color:var(--muted)">⚠ EV &gt;100% detected — odds likely wrong or cover estimate unreliable for extreme lines. Recheck your inputs.</div>':''}
     ${matchHTML}
     <table class="options-table">
-      <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Edge = (Odds - Fair) / Fair — how much better your odds are vs fair value">Edge</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
+      <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Edge = (Odds - Fair) / Fair — how much better your odds are vs fair value">Edge</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th class="num" title="Composite Score — weighted blend of EV, form, attack, defense, context, and more (higher = stronger pick)">Score</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
       ${opts.map((o,i)=>`
         <tr${i===0?' class="best"':''}>
           <td>${i+1}</td><td>${o.idx}</td><td>${o.side==='home'?'H':'A'}</td>
@@ -1121,6 +1121,7 @@ function renderResults(teamA,teamB,opts,best){
           <td class="num" style="color:${o.odds>=o.fairOdds?'var(--success)':'var(--error)'}">${o.odds>=o.fairOdds?'+':''}${((o.odds/o.fairOdds-1)*100).toFixed(0)}%</td>
           <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${dispEv(o.ev,1)}</td>
           <td class="num">${(o.cover*100).toFixed(0)}%</td>
+          <td class="num" style="font-weight:${i===0?'700':'400'};color:${i===0?'var(--primary)':'var(--ink)'}" title="22% EV + 12% attack + 12% def + 8% form + 8% ctx + 8% late + 8% matchup + 6% mot + 3% fatigue + 5% odds + bonuses">${(o.score*100).toFixed(0)}%</td>
           <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
         </tr>`).join('')}
     </table>
@@ -1151,7 +1152,7 @@ function setHist(h){localStorage.setItem('wcP',JSON.stringify(h))}
 
 function saveToHistory(teamA,teamB,best,allOpts,reasoning){
   const h=getHist();
-  h.unshift({id:Date.now(),teamA,teamB,side:best.side,pick:best.line,odds:best.odds,fairOdds:best.fairOdds,confidence:best.confidence.label,ev:best.ev,cover:best.cover,reasoning:reasoning||'',opts:allOpts?allOpts.map(o=>({line:o.line,side:o.side,odds:o.odds,fairOdds:o.fairOdds,ev:o.ev,cover:o.cover,confidence:o.confidence.label})):[],result:'pending',date:fmtDate()});
+  h.unshift({id:Date.now(),teamA,teamB,side:best.side,pick:best.line,odds:best.odds,fairOdds:best.fairOdds,confidence:best.confidence.label,ev:best.ev,cover:best.cover,score:best.score,reasoning:reasoning||'',opts:allOpts?allOpts.map(o=>({line:o.line,side:o.side,odds:o.odds,fairOdds:o.fairOdds,ev:o.ev,cover:o.cover,score:o.score,confidence:o.confidence.label})):[],result:'pending',date:fmtDate()});
   if(h.length>50)h.length=50;
   setHist(h);renderHist();
 }
