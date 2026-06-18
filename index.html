@@ -48,6 +48,8 @@ input[type=number]{-moz-appearance:textfield}
 .results{display:none;margin-top:1.5rem;animation:rfade .4s ease-out}
 @keyframes rfade{from{opacity:0;transform:translateY(.5rem)}to{opacity:1;transform:translateY(0)}}
 .results.visible{display:block}
+.tbl-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl-wrap table{min-width:600px}
 .best-pick{background:var(--surface);border:2px solid var(--primary);border-radius:10px;padding:1.25rem;margin-bottom:1rem;position:relative}
 .best-pick .badge{position:absolute;top:-10px;left:1rem;background:var(--primary);color:oklch(0.95 0 0);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .6rem;border-radius:4px}
 .best-pick .match{font-size:1.1rem;font-weight:700;margin-bottom:.25rem}
@@ -1118,6 +1120,7 @@ function renderResults(teamA,teamB,opts,best){
     ${opts.filter(o=>o.ev>0.5).length>=2?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:.78rem;text-align:center;color:var(--muted)">⚠ Multiple bets with EV &gt;50% — odds look unrealistic. Handicap lines are correlated; not all can have extreme value.</div>':''}
     ${opts.filter(o=>o.ev>1).length>=1?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:.78rem;text-align:center;color:var(--muted)">⚠ EV &gt;100% detected — odds likely wrong or cover estimate unreliable for extreme lines. Recheck your inputs.</div>':''}
     ${matchHTML}
+    <div class="tbl-wrap">
     <table class="options-table">
       <tr><th title="Ranking order of selections (1 = best pick)">#</th><th title="Which handicap option this belongs to (1, 2, or 3)">Opt</th><th title="Side of the bet — H = Home (Team A covers) · A = Away (Team B covers)">Side</th><th title="The team and handicap line being bet on">Bet</th><th class="num" title="Decimal odds — what $1 bet returns if it wins">Odds</th><th class="num" title="Fair odds required for breakeven (1 / cover %)">Fair</th><th class="num" title="Edge = (Odds - Fair) / Fair — how much better your odds are vs fair value">Edge</th><th class="num" title="Expected Value = (Cover% × Odds) − 1. Positive means the bet has statistical value.">EV</th><th class="num" title="Cover probability — estimated chance the selected team covers the Asian handicap">Cover</th><th class="num" title="Composite Score — weighted blend of EV, form, attack, defense, context, and more (higher = stronger pick)">Score</th><th title="Confidence — HIGH=strong data alignment, MEDIUM=moderate, LOW=mixed signals">Conf</th></tr>
       ${opts.map((o,i)=>`
@@ -1133,6 +1136,7 @@ function renderResults(teamA,teamB,opts,best){
           <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
         </tr>`).join('')}
     </table>
+    </div>
     <div class="reasoning">${best.reasoning}</div>
     <div style="margin-top:.75rem;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);padding:.5rem 0 0;line-height:1.5">
       <strong style="color:var(--muted)">Data Sources — Kimi 2026 WC Report</strong> (277pg · 114 tables · 300 agents)
