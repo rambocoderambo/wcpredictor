@@ -69,7 +69,7 @@ input[type=number]{-moz-appearance:textfield}
 .reasoning{margin-top:1rem;padding:.75rem;background:var(--surface);border-radius:6px;font-size:.825rem;color:var(--muted);line-height:1.6;border-left:3px solid var(--primary);white-space:pre-line}
 .reasoning strong{color:var(--ink)}
 .ti{cursor:help;font-size:.65rem;color:var(--muted);margin-left:1px}
-.history-item{display:grid;grid-template-columns:1fr auto auto auto auto;gap:.5rem;align-items:center;padding:.6rem .75rem;font-size:.8rem;border-bottom:1px solid var(--border)}
+.history-item{display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:.5rem;align-items:center;padding:.6rem .75rem;font-size:.8rem;border-bottom:1px solid var(--border)}
 .history-item:last-child{border-bottom:none}
 .history-item .h-match{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .history-item .h-pick{font-family:var(--mono);font-size:.775rem;color:var(--primary)}
@@ -1233,6 +1233,7 @@ function renderHist(){
       <span class="h-match">${i.teamA} vs ${i.teamB}<span class="ti">ⓘ</span></span>
       <span class="h-pick">${i.side==='home'?i.teamA+' ':i.teamB+' '}${i.pick}</span>
       <span class="h-odds">@ ${i.odds.toFixed(3)}</span>
+      <span class="h-pick" style="font-size:.7rem;color:var(--primary)">${i.score!==undefined?(i.score*100).toFixed(0):'?'}%</span>
       <span class="h-result ${i.result}">${i.result==='pending'?'Pnd':i.result==='won'?'Won':i.result==='draw'?'Drw':'Lst'}</span>
       <div class="h-actions" onclick="event.stopPropagation()">
         <button class="btn btn-ghost" style="font-size:.7rem;padding:.2rem .4rem" onclick="setRes(${i.id},'won')" title="Mark as won">✓</button>
