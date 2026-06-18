@@ -1202,7 +1202,7 @@ function renderHist(){
   con.innerHTML=stats+h.map(i=>`
     <div class="history-item" style="cursor:pointer" onclick="viewHistory(${i.id})" title="Click to view past analysis report">
       <span class="h-match">${i.teamA} vs ${i.teamB}<span class="ti">ⓘ</span></span>
-      <span class="h-pick">${i.side==='away'?i.teamB+' ':''}${i.pick}</span>
+      <span class="h-pick">${i.side==='home'?i.teamA+' ':i.teamB+' '}${i.pick}</span>
       <span class="h-odds">@ ${i.odds.toFixed(3)}</span>
       <span class="h-result ${i.result}">${i.result==='pending'?'Pnd':i.result==='won'?'Won':i.result==='draw'?'Drw':'Lst'}</span>
       <div class="h-actions" onclick="event.stopPropagation()">
