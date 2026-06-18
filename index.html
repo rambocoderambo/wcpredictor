@@ -1171,6 +1171,18 @@ function getHist(){
       if(item.opts){
         item.opts.forEach(o=>{if(o.score===undefined)o.score=Math.max(0,Math.min(1,(o.ev||0)*0.5+0.4))});
         item.opts.sort((x,y)=>y.score-x.score);
+        // Re-rank best pick to match highest estimated score
+        const best=item.opts[0];
+        if(best&&(best.score!==undefined&&best.score!==item.score||best.line!==item.pick)){
+          item.pick=best.line;
+          item.side=best.side;
+          item.odds=best.odds;
+          item.fairOdds=best.fairOdds;
+          item.ev=best.ev;
+          item.cover=best.cover;
+          item.score=best.score;
+          item.confidence=best.confidence;
+        }
       }
     });
     return h;
