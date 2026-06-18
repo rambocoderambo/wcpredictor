@@ -1165,10 +1165,13 @@ function renderResults(teamA,teamB,opts,best){
 function getHist(){
   try{
     const h=JSON.parse(localStorage.getItem('wcP')||'[]');
-    // Patch old entries that don't have score field
+    // Patch old entries that don't have score field, then sort by score
     h.forEach(item=>{
       if(item.score===undefined)item.score=Math.max(0,Math.min(1,(item.ev||0)*0.5+0.4));
-      if(item.opts)item.opts.forEach(o=>{if(o.score===undefined)o.score=Math.max(0,Math.min(1,(o.ev||0)*0.5+0.4))});
+      if(item.opts){
+        item.opts.forEach(o=>{if(o.score===undefined)o.score=Math.max(0,Math.min(1,(o.ev||0)*0.5+0.4))});
+        item.opts.sort((x,y)=>y.score-x.score);
+      }
     });
     return h;
   }catch{return[]}
@@ -1246,6 +1249,8 @@ function viewHistory(id){
   const el=$('results');
   let optsHTML='';
   if(item.opts&&item.opts.length){
+    // Sort by score descending so rank matches Score column
+    item.opts.sort((x,y)=>y.score-x.score);
     optsHTML='<div class="tbl-wrap"><table class="options-table"><tr><th title="Ranking order"><span class="ti">ⓘ</span>#</th><th title="Side: H=Home, A=Away"><span class="ti">ⓘ</span>S</th><th title="The bet selection"><span class="ti">ⓘ</span>Bet</th><th class="num" title="Decimal odds"><span class="ti">ⓘ</span>Odds</th><th class="num" title="Expected Value — positive = value"><span class="ti">ⓘ</span>EV</th><th class="num" title="Cover probability — chance of covering the handicap"><span class="ti">ⓘ</span>Cov</th><th class="num" title="Composite Score — weighted blend of EV, attack, defense, form, context, late goals, matchup, motivation, fatigue, odds, and bonuses. Higher = stronger pick."><span class="ti">ⓘ</span>Score</th><th class="num" title="Confidence level"><span class="ti">ⓘ</span>Conf</th></tr>';
     item.opts.forEach((o,i)=>{
       optsHTML+='<tr'+(i===0?' class="best"':'')+'><td>'+(i+1)+'</td><td>'+o.side.charAt(0).toUpperCase()+'</td><td><strong>'+o.line+'</strong></td><td class="num">'+o.odds.toFixed(3)+'</td><td class="num" style="color:'+(o.ev>=0?'var(--success)':'var(--error)')+'">'+dispEv(o.ev)+'</td><td class="num">'+(o.cover*100).toFixed(0)+'%</td><td class="num" style="color:var(--primary)" title="Composite score: blends EV + attack + defense + form + context + late goals + matchup + motivation + fatigue + odds + bonuses. Higher = stronger pick.">'+(o.score!==undefined?(o.score*100).toFixed(0)+'%':Math.max(0,((o.ev||0)*0.5+0.4)).toFixed(2)*100+'%')+'</td><td class="num">'+o.confidence+'</td></tr>';
