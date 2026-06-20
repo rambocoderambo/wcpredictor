@@ -218,7 +218,7 @@ input[type=number]{-moz-appearance:textfield}
 </div>
 
 <div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">
-  <span onclick="toggleVersionHistory()" style="cursor:pointer;color:var(--primary)" title="Click for version history"><strong>v1.19</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Live WC data sync · Poisson EV + market λ blend · 11-factor scoring · Team comparison · Score column
+  <span onclick="toggleVersionHistory()" style="cursor:pointer;color:var(--primary)" title="Click for version history"><strong>v1.20</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Live WC data sync · Poisson EV + market λ blend · 11-factor scoring · Team comparison · Score column
   <div id="versionHistory" style="display:none;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border);text-align:center;line-height:1.8;font-size:.75rem"></div>
 </div>
 
@@ -318,7 +318,7 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 // Championship title probabilities (Kimi Ch.8)
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
-const VERSION = "1.19";
+const VERSION = "1.20";
 const INJURIES_LIVE = {
  "Brazil": [
   {
@@ -606,7 +606,9 @@ const VERSION_HISTORY = [
   {v:"1.15",date:"Jun 17",msg:"absLine scope fix, duplicate sort fix"},
   {v:"1.16",date:"Jun 17",msg:"Market-λ blending: 70% Poisson + 30% market odds"},
   {v:"1.17",date:"Jun 17",msg:"Score column in results table, team name in history picks"},
-  {v:"1.18",date:"Jun 17",msg:"Horizontal scroll for 11-column table, fill VERSION_HISTORY gaps"}
+  {v:"1.18",date:"Jun 17",msg:"Horizontal scroll for 11-column table, fill VERSION_HISTORY gaps"},
+  {v:"1.19",date:"Jun 17",msg:"Score column in history view, old predictions auto-patched"},
+  {v:"1.20",date:"Jun 20",msg:"70% regression shrink (was 50%), EV capped at 50%, confidence recalibrated — fixes overconfidence"}
 ];
 const LAST_SYNC = "Jun 14, 01:10 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true,"1417915":true,"1417916":true,"1417921":true,"1417926":true};
@@ -876,13 +878,15 @@ function estCover(teamA,teamB,line){
   // Push = no P&L, half-win/half-loss counted as 0.5
   let cover=(coverCount+drawCount*0.5)/trials;
 
-  // Regression to 50% — only for covers above 50% (favorite side)
-  // Knockout stage (3+ matches played) gets stronger regression — tighter matches
+  // Regression to 50% — stronger shrink to prevent overconfidence
+  // Group stage: 70% shrink (keep 30% of deviation). Knockout: 85% shrink.
   if(cover>.5){
     const isKnockout=wcA>=3&&wcB>=3;
-    const regress=isKnockout?0.75:0.5;
-    cover=.5+(cover-.5)*(1-regress);
+    const shrink=isKnockout?.85:.7;
+    cover=.5+(cover-.5)*(1-shrink);
   }
+  // Hard cap: cover never exceeds 80% — prevents extreme overconfidence
+  if(cover>.8)cover=.8;
 
   // Blend with Kimi prediction for stability when WC data is scarce — reduced weight
   const matchP=getMatchPred(teamA,teamB);
@@ -975,8 +979,8 @@ function fatigueScore(team){
 function oddsScore(imp,hist){return clamp((hist-imp)/.5,.2,1)}
 
 function confLabel(score,ev){
-  if(score>.65||ev>.08)return{label:'HIGH',cls:'conf-high'};
-  if(score>.45||ev>.02)return{label:'MEDIUM',cls:'conf-med'};
+  if(score>.65&&ev>.20)return{label:'HIGH',cls:'conf-high'};
+  if(score>.45&&ev>.05)return{label:'MEDIUM',cls:'conf-med'};
   return{label:'LOW',cls:'conf-low'};
 }
 
@@ -1027,7 +1031,7 @@ function scoreBet(teamA,teamB,b,a,bd){
   // Trust our model 70%, the market 30%
   const marketCover=1/b.odds;
   const blendedCover=b.cover*0.7+marketCover*0.3;
-  const blendedEv=ev(blendedCover,b.odds);
+  const blendedEv=Math.min(0.5,ev(blendedCover,b.odds));
 
   const pickT=b.side==='home'?teamA:teamB;
   const oppT=b.side==='home'?teamB:teamA;
