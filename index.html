@@ -318,7 +318,7 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 // Championship title probabilities (Kimi Ch.8)
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
-const VERSION = "1.20";
+const VERSION = "1.21";
 const INJURIES_LIVE = {
  "Brazil": [
   {
@@ -608,7 +608,8 @@ const VERSION_HISTORY = [
   {v:"1.17",date:"Jun 17",msg:"Score column in results table, team name in history picks"},
   {v:"1.18",date:"Jun 17",msg:"Horizontal scroll for 11-column table, fill VERSION_HISTORY gaps"},
   {v:"1.19",date:"Jun 17",msg:"Score column in history view, old predictions auto-patched"},
-  {v:"1.20",date:"Jun 20",msg:"70% regression shrink (was 50%), EV capped at 50%, confidence recalibrated — fixes overconfidence"}
+  {v:"1.20",date:"Jun 20",msg:"70% regression shrink (was 50%), EV capped at 50%, confidence recalibrated — fixes overconfidence"},
+  {v:"1.21",date:"Jun 25",msg:"60/40 market blend (was 70/30), final 80% cap, removed Kimi blend, new confidence thresholds, selective mode toggle, marketAgreement composite score, calibration dashboard"}
 ];
 const LAST_SYNC = "Jun 14, 01:10 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true,"1417915":true,"1417916":true,"1417921":true,"1417926":true};
@@ -888,12 +889,6 @@ function estCover(teamA,teamB,line){
   // Hard cap: cover never exceeds 80% — prevents extreme overconfidence
   if(cover>.8)cover=.8;
 
-  // Blend with Kimi prediction for stability when WC data is scarce — reduced weight
-  const matchP=getMatchPred(teamA,teamB);
-  if(matchP!==null&&wcA+wcB<2){
-    const blended=matchP*0.15+cover*0.85;
-    return clamp(blended,.03,.99);
-  }
   return clamp(cover,.03,.99);
 }
 
@@ -978,9 +973,10 @@ function fatigueScore(team){
 
 function oddsScore(imp,hist){return clamp((hist-imp)/.5,.2,1)}
 
-function confLabel(score,ev){
-  if(score>.65&&ev>.20)return{label:'HIGH',cls:'conf-high'};
-  if(score>.45&&ev>.05)return{label:'MEDIUM',cls:'conf-med'};
+function confLabel(score,ev,cover,line){
+  const absL=Math.abs(parseFloat(line)||0);
+  if(score>.50&&ev>.10&&cover>.40&&cover<.70&&absL<=1.5)return{label:'HIGH',cls:'conf-high'};
+  if(score>.40&&ev>.05&&cover>.35&&cover<.75)return{label:'MEDIUM',cls:'conf-med'};
   return{label:'LOW',cls:'conf-low'};
 }
 
@@ -1018,6 +1014,7 @@ function analyze(){
   const sorted=bets.sort((x,y)=>y.score-x.score);
   // Verify descending order
   for(let i=1;i<sorted.length;i++){if(sorted[i].score>sorted[i-1].score)console.warn('Sort error at',i)}
+  window.__lastOpts=sorted;window.__lastBest=sorted[0];window.__lastTA=teamA;window.__lastTB=teamB;
   renderResults(teamA,teamB,sorted,sorted[0]);
   saveToHistory(teamA,teamB,sorted[0],sorted,sorted[0].reasoning);
   hideTeamInfo();
@@ -1026,18 +1023,20 @@ function analyze(){
 function scoreBet(teamA,teamB,b,a,bd){
   const ip=imp(b.odds);
 
-  // Market-implied λ blending: blend our Poisson cover with the market's implied cover
-  // Market-implied cover = 1/odds (the break-even probability the market assigns)
-  // Trust our model 70%, the market 30%
-  const marketCover=1/b.odds;
-  const blendedCover=b.cover*0.7+marketCover*0.3;
-  const blendedEv=Math.min(0.5,ev(blendedCover,b.odds));
+  // Market-implied λ blending: 60% market, 40% Poisson model
+  // Market-implied cover = 1/odds × 0.95 (adjusting for ~5% bookmaker margin)
+  // Higher market weight prevents overconfidence when model disagrees
+  const marketCover=Math.min(0.99,(1/b.odds)*0.95);
+  const blendedCover=marketCover*0.6+b.cover*0.4;
+  // Hard cap: cover never exceeds 80% — prevents extreme overconfidence
+  const finalCover=Math.min(blendedCover,0.80);
+  const blendedEv=Math.min(0.5,ev(finalCover,b.odds));
 
   const pickT=b.side==='home'?teamA:teamB;
   const oppT=b.side==='home'?teamB:teamA;
   const fS=b.side==='home'?formScore(teamA):formScore(teamB);
   const cS=ctxScore(teamA,teamB);
-  const oS=oddsScore(ip,blendedCover);
+  const oS=oddsScore(ip,finalCover);
   const aS=attackScore(pickT);
   const dS=defScore(pickT);
   const discS=disciplineScore(pickT);
@@ -1046,23 +1045,19 @@ function scoreBet(teamA,teamB,b,a,bd){
   const moS=motivationScore(pickT,oppT);
   const fS2=fatigueScore(pickT);
 
-  const total=blendedEv*.22+fS*.08+aS*.12+dS*.12+discS*.08+cS*.08+lS*.08+mS*.08+moS*.06+fS2*.03+oS*.05;
+  // Market agreement: how close our Poisson model is to the market (0-1)
+  const marketAgreement=1-Math.abs(b.cover-marketCover);
+  const total=marketAgreement*.35+blendedEv*.25+fS*.10+aS*.08+dS*.08+cS*.05+discS*.05+lS*.04;
 
-  // Market divergence bonus
-  const div=DIVERGENCE[pickT]||0;
-  const divBonus=Math.max(0,div/20);
-
-  // Championship prob bonus for ANY team (Table 8.1 + 8.2)
-  const champAll=CHAMP_PROB_ALL[pickT]||0;
-  const champBonus=champAll/100*.05;
-
-  const finalScore=total+divBonus+champBonus;
-  const conf=confLabel(finalScore,blendedEv);
+  const finalScore=Math.min(total,0.8);
+  const conf=confLabel(finalScore,blendedEv,finalCover,b.line);
 
   const parts=[];
   const pickD=gt(pickT);
   const oppD=gt(oppT);
   const matchP=getMatchPred(teamA,teamB);
+  const div=DIVERGENCE[pickT]||0;
+  const champAll=CHAMP_PROB_ALL[pickT]||0;
 
   parts.push(pickT+' (FIFA #'+pickD.fifaRank+', Elo '+ELO[pickT]+', Group '+pickD.g+') '+(b.side==='home'?'giving':'receiving')+' '+b.line+'. '+teamA+' win prob from Kimi report: '+(matchP!==null?(matchP*100).toFixed(0)+'% (head-to-head analysis)':'~'+(Math.round(ELO[pickT]/(ELO[pickT]+ELO[oppT])*100))+'% (Elo-based)')+'.');
   if(pickD.form)parts.push('Form: '+pickD.form+'.');
@@ -1083,9 +1078,9 @@ function scoreBet(teamA,teamB,b,a,bd){
   const inj=INJURY_MATRIX[pickT];
   if(inj&&inj.length)parts.push('Injury watch: '+inj.join('. ')+'.');
   parts.push('Backtest: Kimi model 62.5% on 2018/60.4% on 2022 group stage.');
-  parts.push('Est. cover '+(blendedCover*100).toFixed(0)+'% | EV '+(blendedEv>=0?'+':'')+clamp(blendedEv*100,-99,99).toFixed(1)+'%. '+conf.label+' conviction.');
+  parts.push('Est. cover '+(finalCover*100).toFixed(0)+'% | EV '+(blendedEv>=0?'+':'')+clamp(blendedEv*100,-99,99).toFixed(1)+'%. '+conf.label+' conviction.');
 
-  b.ev=blendedEv;b.cover=blendedCover;b.score=finalScore;b.confidence=conf;b.fairOdds=+(1/blendedCover).toFixed(3);
+  b.ev=blendedEv;b.cover=finalCover;b.score=finalScore;b.confidence=conf;b.fairOdds=+(1/finalCover).toFixed(3);
   b.reasoning=parts.join(' ').replace(/\. (?!\d)/g,'.\n');
   return b;
 }
@@ -1093,11 +1088,22 @@ function scoreBet(teamA,teamB,b,a,bd){
 function $(id){return document.getElementById(id)}
 
 // ===== RENDER =====
+function toggleSelective(){
+  localStorage.setItem('wcSelective',document.getElementById('selToggle').checked?'1':'');
+  if(window.__lastTA)renderResults(window.__lastTA,window.__lastTB,window.__lastOpts,window.__lastBest);
+}
 function renderResults(teamA,teamB,opts,best){
   const el=$('results'),conf=best.confidence;
   const sl=best.side==='home'?teamA:teamB;
   const matchKey=teamA+' vs '+teamB;
   const matchP=MATCH_PRED[matchKey]||MATCH_PRED[teamB+' vs '+teamA];
+
+  // Selective mode: filter to high-value bets only
+  const selectiveMode=localStorage.getItem('wcSelective')==='1';
+  if(selectiveMode){
+    opts=opts.filter(o=>o.ev>=.05&&o.ev<=.30&&o.cover>=.40&&o.cover<=.70&&Math.abs(parseFloat(o.line)||0)<=2.0);
+    if(opts.length){opts.sort((x,y)=>y.score-x.score);best=opts[0]}
+  }
   let matchHTML='';
   if(matchP){
     const tA=TRAVEL[teamA],tB=TRAVEL[teamB];
@@ -1110,6 +1116,14 @@ function renderResults(teamA,teamB,opts,best){
   }
 
   el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:.75rem;margin-bottom:.75rem">
+      <label style="font-size:.7rem;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:.35rem">
+        <input type="checkbox" id="selToggle" ${selectiveMode?'checked':''} onchange="toggleSelective()">
+        Selective Mode
+      </label>
+    </div>
+    ${selectiveMode&&opts.length===0?'<div style="margin-bottom:.75rem;padding:.75rem;background:var(--low-bg);color:var(--low-text);border-radius:6px;font-size:.85rem;text-align:center;font-weight:600">⚠ Skip this match — no high-value bets found that meet selective criteria (EV 5-30%, cover 40-70%, line ≤ 2.0). Switch to All Matches to see all options.</div>':''}
+    ${opts.length?`
     <div class="best-pick">
       <div class="badge">Best Pick</div>
       <div class="match">${teamA} vs ${teamB}</div>
@@ -1139,12 +1153,13 @@ function renderResults(teamA,teamB,opts,best){
           <td class="num" style="color:${o.odds>=o.fairOdds?'var(--success)':'var(--error)'}">${o.odds>=o.fairOdds?'+':''}${((o.odds/o.fairOdds-1)*100).toFixed(0)}%</td>
           <td class="num" style="color:${o.ev>=0?'var(--success)':'var(--error)'}">${dispEv(o.ev,1)}</td>
           <td class="num">${(o.cover*100).toFixed(0)}%</td>
-          <td class="num" style="font-weight:${i===0?'700':'400'};color:${i===0?'var(--primary)':'var(--ink)'}" title="Composite score ranking: blends EV (22%) + attack (12%) + defense (12%) + form (8%) + context (8%) + late goals (8%) + matchup (8%) + motivation (6%) + fatigue (3%) + odds (5%) + bonuses. Higher = stronger pick.">${(o.score*100).toFixed(0)}%</td>
+          <td class="num" style="font-weight:${i===0?'700':'400'};color:${i===0?'var(--primary)':'var(--ink)'}" title="Composite score ranking: blends market agreement (35%) + EV (25%) + form (10%) + attack (8%) + defense (8%) + context (5%) + discipline (5%) + late goals (4%). Higher = stronger pick.">${(o.score*100).toFixed(0)}%</td>
           <td><span class="${o.confidence.cls}">${o.confidence.label}</span></td>
         </tr>`).join('')}
     </table>
     </div>
     <div class="reasoning">${best.reasoning}</div>
+    `:''}
     <div style="margin-top:.75rem;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);padding:.5rem 0 0;line-height:1.5">
       <strong style="color:var(--muted)">Data Sources — Kimi 2026 WC Report</strong> (277pg · 114 tables · 300 agents)
       + <strong style="color:var(--primary)">Live WC Data</strong> (v${VERSION})
@@ -1244,7 +1259,35 @@ function renderHist(){
   }
   stats+='</div>';
 
-  con.innerHTML=stats+h.map(i=>`
+  // Calibration dashboard
+  const resolved2=resolved;
+  const bands=[
+    {label:'HIGH',fn:x=>x.confidence==='HIGH'},
+    {label:'MEDIUM',fn:x=>x.confidence==='MEDIUM'},
+    {label:'LOW',fn:x=>x.confidence==='LOW'},
+    {label:'EV 0-5%',fn:x=>x.ev>=0&&x.ev<.05},
+    {label:'EV 5-15%',fn:x=>x.ev>=.05&&x.ev<.15},
+    {label:'EV 15-30%',fn:x=>x.ev>=.15&&x.ev<.30},
+    {label:'EV 30%+',fn:x=>x.ev>=.30},
+    {label:'Line ≤0.5',fn:x=>Math.abs(parseFloat(x.pick)||0)<=.5},
+    {label:'Line 0.5-1.5',fn:x=>{const a=Math.abs(parseFloat(x.pick)||0);return a>.5&&a<=1.5}},
+    {label:'Line 1.5+',fn:x=>Math.abs(parseFloat(x.pick)||0)>1.5},
+  ];
+  let calHTML='<div style="margin:.5rem .6rem"><button class="btn btn-ghost" style="font-size:.7rem;padding:.25rem .6rem" onclick="var d=this.nextElementSibling;d.style.display=d.style.display===\'none\'?\'block\':\'none\'">Accuracy by Category ▸</button><div style="display:none;margin-top:.35rem;font-size:.68rem;line-height:1.8">';
+  bands.forEach(function(b){
+    const subset=resolved2.filter(b.fn);
+    if(!subset.length){calHTML+='<span style="color:var(--muted);margin-right:1rem">'+b.label+': —</span>';return}
+    const sw=subset.filter(x=>x.result==='won').length;
+    const sl=subset.filter(x=>x.result==='lost').length;
+    const sd=subset.filter(x=>x.result==='draw').length;
+    const sr=sw+sl;
+    const sp=sr>0?(sw/sr*100).toFixed(0):'--';
+    const color=sr>0?(sw/sr>=.5?'var(--success)':'var(--error)'):'var(--muted)';
+    calHTML+='<span style="margin-right:1rem;white-space:nowrap">'+b.label+': <strong style="color:'+color+'">'+sw+'/'+sr+' ('+sp+'%)</strong>'+(sd?' <span style="color:var(--primary)">'+sd+' draw</span>':'')+'</span>';
+  });
+  calHTML+='</div></div>';
+
+  con.innerHTML=stats+calHTML+h.map(i=>`
     <div class="history-item" style="cursor:pointer" onclick="viewHistory(${i.id})" title="Click to view past analysis report">
       <span class="h-match">${i.teamA} vs ${i.teamB}<span class="ti">ⓘ</span></span>
       <span class="h-pick">${i.side==='home'?i.teamA+' ':i.teamB+' '}${i.pick}</span>
