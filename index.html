@@ -1024,13 +1024,14 @@ function analyze(){
 function scoreBet(teamA,teamB,b,a,bd){
   const ip=imp(b.odds);
 
-  // Market-implied λ blending: 60% market, 40% Poisson model
-  // Market-implied cover = 1/odds × 0.95 (adjusting for ~5% bookmaker margin)
-  // Higher market weight prevents overconfidence when model disagrees
+  // Adaptive market blend: blend weight depends on data volume
+  // Teams with 3+ matches each → pure model (no market blend)
+  // Teams with 0 matches each → pure market (use market as prior)
   const marketCover=Math.min(0.99,(1/b.odds)*0.95);
-  const blendedCover=marketCover*0.6+b.cover*0.4;
-  // Hard cap: cover never exceeds 80% — prevents extreme overconfidence
-  const finalCover=Math.min(blendedCover,0.80);
+  const wcA_=a.wcMatches||0,wcB_=bd.wcMatches||0;
+  const modelW=Math.min(1,(wcA_+wcB_)/6);
+  const blendedCover=marketCover*(1-modelW)+b.cover*modelW;
+  const finalCover=Math.min(blendedCover,0.95);
   const blendedEv=Math.min(0.5,ev(finalCover,b.odds));
 
   const pickT=b.side==='home'?teamA:teamB;
@@ -1046,11 +1047,9 @@ function scoreBet(teamA,teamB,b,a,bd){
   const moS=motivationScore(pickT,oppT);
   const fS2=fatigueScore(pickT);
 
-  // Market agreement: how close our Poisson model is to the market (0-1)
-  const marketAgreement=1-Math.abs(b.cover-marketCover);
-  const total=marketAgreement*.35+blendedEv*.25+fS*.10+aS*.08+dS*.08+cS*.05+discS*.05+lS*.04;
+  const total=blendedEv*.40+fS*.12+aS*.12+dS*.12+cS*.08+discS*.06+lS*.05;
 
-  const finalScore=Math.min(total,0.8);
+  const finalScore=Math.min(total,0.85);
   const conf=confLabel(finalScore,blendedEv,finalCover,b.line);
 
   const parts=[];
