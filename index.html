@@ -226,7 +226,7 @@ input[type=number]{-moz-appearance:textfield}
 </div>
 
 <div style="margin-top:1.5rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);text-align:center">
-  <span onclick="toggleVersionHistory()" style="cursor:pointer;color:var(--primary)" title="Click for version history"><strong>v1.21</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Live WC data sync · Poisson EV + market λ blend · 60% market / 40% model · Selective mode · Calibration dashboard
+  <span onclick="toggleVersionHistory()" style="cursor:pointer;color:var(--primary)" title="Click for version history"><strong>v2.0</strong> <span style="font-size:.55rem;opacity:.6">▼</span></span> — Rambo Action · Live WC data sync · Bayesian Poisson engine · Adaptive market blend · H2H/set-piece/weighted form · Odds movement · Selective mode · Calibration
   <div id="versionHistory" style="display:none;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border);text-align:center;line-height:1.8;font-size:.75rem"></div>
 </div>
 
@@ -326,7 +326,7 @@ const DIVERGENCE = {"Germany":3.6,"England":-3.3,"Spain":-1.7,"France":-1.7,"Bra
 // Championship title probabilities (Kimi Ch.8)
 const TITLE_PROBS = {"Spain":16.1,"France":14,"Argentina":11.7,"Brazil":10.5,"England":13,"Germany":10.5,"Portugal":8.5,"Netherlands":4};
 
-const VERSION = "1.21";
+const VERSION = "2.0";
 const INJURIES_LIVE = {
  "Brazil": [
   {
@@ -617,7 +617,8 @@ const VERSION_HISTORY = [
   {v:"1.18",date:"Jun 17",msg:"Horizontal scroll for 11-column table, fill VERSION_HISTORY gaps"},
   {v:"1.19",date:"Jun 17",msg:"Score column in history view, old predictions auto-patched"},
   {v:"1.20",date:"Jun 20",msg:"70% regression shrink (was 50%), EV capped at 50%, confidence recalibrated — fixes overconfidence"},
-  {v:"1.21",date:"Jun 25",msg:"60/40 market blend (was 70/30), final 80% cap, removed Kimi blend, new confidence thresholds, selective mode toggle, marketAgreement composite score, calibration dashboard"}
+  {v:"1.21",date:"Jun 25",msg:"60/40 market blend (was 70/30), final 80% cap, removed Kimi blend, new confidence thresholds, selective mode toggle, marketAgreement composite score, calibration dashboard"},
+  {v:"2.0",date:"Jun 28",msg:"Bayesian Poisson engine (Gamma conjugate prior), removed 70% regression, adaptive market blend, new score formula (40% EV, H2H, set-piece, weighted form), odds movement input, enhanced selective mode, calibration dashboard with favorite/dog split"}
 ];
 const LAST_SYNC = "Jun 14, 01:10 PM";
 const LS_PROCESSED = {"1417909":true,"1417910":true,"1417915":true,"1417916":true,"1417921":true,"1417926":true};
