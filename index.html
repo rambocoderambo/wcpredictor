@@ -816,16 +816,23 @@ function estCover(teamA,teamB,line){
 
   // Expected goals per team (blend WC live data with Kimi historical)
   const avgGoal=1.3;
+  // Bayesian Gamma(5,4) prior: mean 1.25, shape 5 — naturally shrinks data-poor teams
+  const GA=5,GB=4;
   const wcA=a.wcMatches||0,wcB=b.wcMatches||0;
   const gsA=wcA>0?a.gs/wcA:a.gs;
   const gcA=wcA>0?a.gc/wcA:a.gc;
   const gsB=wcB>0?b.gs/wcB:b.gs;
   const gcB=wcB>0?b.gc/wcB:b.gc;
+  // Bayesian strength estimate = (prior_goals + actual_goals) / (prior_matches + actual_matches)
+  const bsA=(GA+(wcA>0?a.gs:0))/(GB+wcA);
+  const bdA=(GA+(wcA>0?a.gc:0))/(GB+wcA);
+  const bsB=(GA+(wcB>0?b.gs:0))/(GB+wcB);
+  const bdB=(GA+(wcB>0?b.gc:0))/(GB+wcB);
   const homeAdj=HOME_ADV[teamA]?0.01:0;
 
-  // Attack × defense interaction for expected goals
-  const lamA=Math.max(.2,(gsA/avgGoal)*(gcB/avgGoal)*avgGoal+homeAdj);
-  const lamB=Math.max(.2,(gsB/avgGoal)*(gcA/avgGoal)*avgGoal);
+  // Attack × defense interaction via Bayesian strength estimates
+  const lamA=Math.max(.1,(bsA/1.25)*(bdB/1.25)*1.25+homeAdj);
+  const lamB=Math.max(.1,(bsB/1.25)*(bdA/1.25)*1.25);
 
   const absLine=Math.abs(n);
 
@@ -879,15 +886,9 @@ function estCover(teamA,teamB,line){
   // Push = no P&L, half-win/half-loss counted as 0.5
   let cover=(coverCount+drawCount*0.5)/trials;
 
-  // Regression to 50% — stronger shrink to prevent overconfidence
-  // Group stage: 70% shrink (keep 30% of deviation). Knockout: 85% shrink.
-  if(cover>.5){
-    const isKnockout=wcA>=3&&wcB>=3;
-    const shrink=isKnockout?.85:.7;
-    cover=.5+(cover-.5)*(1-shrink);
-  }
-  // Hard cap: cover never exceeds 80% — prevents extreme overconfidence
-  if(cover>.8)cover=.8;
+  // Light far cap only — Bayesian prior naturally prevents extreme values for data-poor teams
+  if(cover>.95)cover=.95;
+  if(cover<.05)cover=.05;
 
   return clamp(cover,.03,.99);
 }
