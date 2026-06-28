@@ -1021,8 +1021,8 @@ function weightedFormScore(team){
 
 function confLabel(score,ev,cover,line){
   const absL=Math.abs(parseFloat(line)||0);
-  if(score>.50&&ev>.10&&cover>.40&&cover<.70&&absL<=1.5)return{label:'HIGH',cls:'conf-high'};
-  if(score>.40&&ev>.05&&cover>.35&&cover<.75)return{label:'MEDIUM',cls:'conf-med'};
+  if(score>.55&&ev>.08&&cover>.55&&absL<=1.0)return{label:'HIGH',cls:'conf-high'};
+  if(score>.45&&ev>.03&&cover>.50&&absL<=1.5)return{label:'MEDIUM',cls:'conf-med'};
   return{label:'LOW',cls:'conf-low'};
 }
 
@@ -1155,7 +1155,7 @@ function renderResults(teamA,teamB,opts,best){
   // Selective mode: filter to high-value bets only
   const selectiveMode=localStorage.getItem('wcSelective')==='1';
   if(selectiveMode){
-    opts=opts.filter(o=>o.ev>=.05&&o.ev<=.30&&o.cover>=.40&&o.cover<=.70&&Math.abs(parseFloat(o.line)||0)<=2.0);
+    opts=opts.filter(o=>o.ev>=.05&&o.ev<=.25&&o.cover>=.55&&o.cover<=.80&&Math.abs(parseFloat(o.line)||0)<=1.0&&o.score>.50&&(o.confidence.label==='HIGH'||o.confidence.label==='MEDIUM'));
     if(opts.length){opts.sort((x,y)=>y.score-x.score);best=opts[0]}
   }
   let matchHTML='';
@@ -1176,7 +1176,7 @@ function renderResults(teamA,teamB,opts,best){
         Selective Mode
       </label>
     </div>
-    ${selectiveMode&&opts.length===0?'<div style="margin-bottom:.75rem;padding:.75rem;background:var(--low-bg);color:var(--low-text);border-radius:6px;font-size:.85rem;text-align:center;font-weight:600">⚠ Skip this match — no high-value bets found that meet selective criteria (EV 5-30%, cover 40-70%, line ≤ 2.0). Switch to All Matches to see all options.</div>':''}
+    ${selectiveMode&&opts.length===0?'<div style="margin-bottom:.75rem;padding:.75rem;background:var(--low-bg);color:var(--low-text);border-radius:6px;font-size:.85rem;text-align:center;font-weight:600">⚠ Skip this match — no bets meet selective criteria (EV 5-25%, cover 55-80%, line ≤ 1.0, MEDIUM+ confidence). Switch to All Matches to see all options.</div>':''}
     ${opts.length?`
     <div class="best-pick">
       <div class="badge">Best Pick</div>
