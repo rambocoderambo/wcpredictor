@@ -123,9 +123,10 @@ input[type=number]{-moz-appearance:textfield}
   <div class="section">
     <div class="card">
       <div class="form-grid">
-        <select id="teamA" aria-label="Select Team A"><option value="">Select Team A</option></select>
-        <div class="vs">vs</div>
-        <select id="teamB" aria-label="Select Team B"><option value="">Select Team B</option></select>
+        <select id="matchSelect" aria-label="Select Match" style="grid-column:1/-1"><option value="">Select Match (Group Stage)</option></select>
+        <select id="teamA" aria-label="Select Team A" style="display:none"><option value="">Select Team A</option></select>
+        <div class="vs" style="display:none">vs</div>
+        <select id="teamB" aria-label="Select Team B" style="display:none"><option value="">Select Team B</option></select>
       </div>
 
       <div id="teamInfoA" class="team-info"></div>
@@ -1476,8 +1477,8 @@ function importPredictions(input){
 
 // ===== FORM =====
 function clearForm(){
-  $('teamA').value='';$('teamB').value='';
-  for(let i=1;i<=3;i++){$('h'+i).value='';$('o'+i+'h').value='';$('o'+i+'a').value=''}
+  $('teamA').value='';$('teamB').value='';if($('matchSelect'))$('matchSelect').value='';
+  for(let i=1;i<=3;i++){$('h'+i).value='';$('o'+i+'h').value='';$('o'+i+'a').value='';if($('o'+i+'o'))$('o'+i+'o').value=''}
   $('results').classList.remove('visible');hideTeamInfo();
 }
 
@@ -1593,6 +1594,31 @@ function init(){
     });
   };
   fill('teamA');fill('teamB');
+
+  // Populate match dropdown with all group stage fixtures
+  const ms=$('matchSelect');
+  if(ms){
+    let mh='<option value="">Select Match (Group Stage)</option>';
+    gs.forEach(g=>{
+      const teams=GROUPS[g];
+      for(let i=0;i<teams.length;i++){
+        for(let j=i+1;j<teams.length;j++){
+          const t1=teams[i],t2=teams[j];
+          mh+='<option value="'+t1+'|'+t2+'">Group '+g+': '+t1+' vs '+t2+'</option>';
+        }
+      }
+    });
+    ms.innerHTML=mh;
+    ms.addEventListener('change',function(){
+      const v=this.value;
+      if(!v){$('teamA').value='';$('teamB').value='';$('teamInfoA').classList.remove('visible');$('teamInfoB').classList.remove('visible');$('teamCompare').style.display='none';return}
+      const parts=v.split('|');
+      $('teamA').value=parts[0];
+      $('teamB').value=parts[1];
+      showTeamInfo('teamA','teamInfoA');
+      showTeamInfo('teamB','teamInfoB');
+    });
+  }
   renderHist();
   document.querySelectorAll('input').forEach(el=>{
     el.addEventListener('keydown',e=>{if(e.key==='Enter')analyze()});
@@ -1604,12 +1630,16 @@ function init(){
   // Restore last form inputs
   try{
     const saved=JSON.parse(localStorage.getItem('wcForm')||'{}');
-    if(saved.teamA)$('teamA').value=saved.teamA;
-    if(saved.teamB)$('teamB').value=saved.teamB;
+    if(saved.teamA&&saved.teamB){
+      $('teamA').value=saved.teamA;$('teamB').value=saved.teamB;
+      const ms=$('matchSelect');
+      if(ms){ms.value=saved.teamA+'|'+saved.teamB;if(ms.value!==saved.teamA+'|'+saved.teamB)ms.value=''}
+    }
     for(let i=1;i<=3;i++){
       if(saved['h'+i])$('h'+i).value=saved['h'+i];
       if(saved['o'+i+'h'])$('o'+i+'h').value=saved['o'+i+'h'];
       if(saved['o'+i+'a'])$('o'+i+'a').value=saved['o'+i+'a'];
+      if(saved['o'+i+'o']&&$('o'+i+'o'))$('o'+i+'o').value=saved['o'+i+'o'];
     }
     if(saved.teamA)showTeamInfo('teamA','teamInfoA');
     if(saved.teamB)showTeamInfo('teamB','teamInfoB');
@@ -1623,9 +1653,10 @@ document.querySelectorAll('select,input').forEach(el=>{
 });
 function saveForm(){
   var f={};
-  f.teamA=$('teamA').value;f.teamB=$('teamB').value;
+  f.teamA=$('teamA').value;f.teamB=$('teamB').value;f.matchKey=($('matchSelect')||{}).value||'';
   for(var i=1;i<=3;i++){
     f['h'+i]=$('h'+i).value;f['o'+i+'h']=$('o'+i+'h').value;f['o'+i+'a']=$('o'+i+'a').value;
+    if($('o'+i+'o'))f['o'+i+'o']=$('o'+i+'o').value;
   }
   try{localStorage.setItem('wcForm',JSON.stringify(f))}catch{}
 }
