@@ -123,7 +123,7 @@ input[type=number]{-moz-appearance:textfield}
   <div class="section">
     <div class="card">
       <div class="form-grid">
-        <select id="matchSelect" aria-label="Select Match" style="grid-column:1/-1"><option value="">Select Match (Group Stage)</option></select>
+        <select id="matchSelect" aria-label="Select Match" style="grid-column:1/-1"><option value="">Select Match (Round of 32)</option></select>
         <select id="teamA" aria-label="Select Team A" style="display:none"><option value="">Select Team A</option></select>
         <div class="vs" style="display:none">vs</div>
         <select id="teamB" aria-label="Select Team B" style="display:none"><option value="">Select Team B</option></select>
@@ -1595,18 +1595,31 @@ function init(){
   };
   fill('teamA');fill('teamB');
 
-  // Populate match dropdown with all group stage fixtures
+  // Populate match dropdown with Round of 32 fixtures
+  const R32_FIXTURES = [
+    "South Africa|Canada",
+    "Brazil|Japan",
+    "Germany|Paraguay",
+    "Netherlands|Morocco",
+    "Ivory Coast|Norway",
+    "France|Sweden",
+    "Mexico|Ecuador",
+    "England|DR Congo",
+    "Belgium|Senegal",
+    "USA|Bosnia and Herzegovina",
+    "Spain|Austria",
+    "Portugal|Croatia",
+    "Switzerland|Algeria",
+    "Australia|Egypt",
+    "Argentina|Cape Verde",
+    "Colombia|Ghana"
+  ];
   const ms=$('matchSelect');
   if(ms){
-    let mh='<option value="">Select Match (Group Stage)</option>';
-    gs.forEach(g=>{
-      const teams=GROUPS[g];
-      for(let i=0;i<teams.length;i++){
-        for(let j=i+1;j<teams.length;j++){
-          const t1=teams[i],t2=teams[j];
-          mh+='<option value="'+t1+'|'+t2+'">Group '+g+': '+t1+' vs '+t2+'</option>';
-        }
-      }
+    let mh='<option value="">Select Match (Round of 32)</option>';
+    R32_FIXTURES.forEach(function(pair){
+      const parts=pair.split('|');
+      mh+='<option value="'+pair+'">'+parts[0]+' vs '+parts[1]+'</option>';
     });
     ms.innerHTML=mh;
     ms.addEventListener('change',function(){
