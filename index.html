@@ -7,101 +7,98 @@
 <title>WC Predictor – Asian Handicap Analysis</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:oklch(1 0 0);--surface:oklch(0.97 0.003 170);--ink:oklch(0.15 0.008 170);--primary:oklch(0.5 0.12 170);--primary-hover:oklch(0.45 0.12 170);--accent:oklch(0.55 0.15 35);--accent-hover:oklch(0.5 0.15 35);--muted:oklch(0.42 0.008 170);--border:oklch(0.88 0.005 170);--success:oklch(0.55 0.15 145);--error:oklch(0.55 0.2 25);--warning:oklch(0.65 0.15 85);--high-bg:oklch(0.92 0.04 145);--high-text:oklch(0.3 0.08 145);--med-bg:oklch(0.92 0.04 85);--med-text:oklch(0.35 0.08 85);--low-bg:oklch(0.92 0.04 25);--low-text:oklch(0.35 0.08 25);--font:system-ui,-apple-system,sans-serif;--mono:ui-monospace,'SF Mono',monospace}
-[data-theme="dark"]{--bg:oklch(0.20 0.008 197);--surface:oklch(0.25 0.013 196);--ink:#d9dfdf;--muted:#9aadad;--primary:oklch(0.62 0.12 197);--primary-hover:oklch(0.57 0.12 197);--accent:oklch(0.62 0.15 35);--accent-hover:oklch(0.57 0.15 35);--border:oklch(0.33 0.01 196);--success:oklch(0.6 0.15 145);--error:oklch(0.6 0.2 25);--warning:oklch(0.7 0.15 85);--high-bg:oklch(0.32 0.06 145);--high-text:oklch(0.7 0.08 145);--med-bg:oklch(0.32 0.06 85);--med-text:oklch(0.7 0.08 85);--low-bg:oklch(0.32 0.06 25);--low-text:oklch(0.7 0.08 25)}
-html{font-size:16px}
-body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
-.container{max-width:720px;margin:0 auto;padding:2rem 1.5rem}
-.header{margin-bottom:2.5rem}
-.header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem;width:100%}
-.header h1 span{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--primary);align-items:center;justify-content:center;color:oklch(0.95 0 0);font-size:.75rem;font-weight:700}
-.header .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
-.section{margin-bottom:2rem}
-.section-title{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.75rem}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem}
+:root{--bg:oklch(0.97 0.003 170);--surface:oklch(0.94 0.005 170);--ink:oklch(0.12 0.008 170);--primary:oklch(0.48 0.14 197);--primary-hover:oklch(0.42 0.14 197);--accent:oklch(0.55 0.15 35);--accent-hover:oklch(0.48 0.15 35);--muted:oklch(0.4 0.008 170);--border:oklch(0.85 0.005 170);--success:oklch(0.5 0.16 145);--error:oklch(0.5 0.2 25);--warning:oklch(0.6 0.15 85);--high-bg:oklch(0.88 0.06 145);--high-text:oklch(0.25 0.1 145);--med-bg:oklch(0.88 0.06 85);--med-text:oklch(0.3 0.1 85);--low-bg:oklch(0.9 0.04 25);--low-text:oklch(0.3 0.1 25);--font:system-ui,-apple-system,sans-serif;--mono:ui-monospace,'SF Mono',monospace}
+[data-theme="dark"]{--bg:oklch(0.165 0.008 200);--surface:oklch(0.215 0.012 198);--ink:oklch(0.86 0.008 198);--muted:oklch(0.55 0.01 198);--primary:oklch(0.58 0.15 197);--primary-hover:oklch(0.52 0.15 197);--accent:oklch(0.6 0.15 35);--accent-hover:oklch(0.53 0.15 35);--border:oklch(0.28 0.008 198);--success:oklch(0.58 0.16 145);--error:oklch(0.58 0.22 25);--warning:oklch(0.68 0.15 85);--high-bg:oklch(0.28 0.06 145);--high-text:oklch(0.68 0.1 145);--med-bg:oklch(0.28 0.06 85);--med-text:oklch(0.68 0.1 85);--low-bg:oklch(0.28 0.06 25);--low-text:oklch(0.68 0.1 25)}
+html{font-size:15px}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+.container{max-width:780px;margin:0 auto;padding:2rem 1.5rem}
+.header{margin-bottom:2rem}
+.header h1{font-size:1.35rem;font-weight:650;letter-spacing:-.025em;display:flex;align-items:center;gap:.5rem;width:100%}
+.header .sub{color:var(--muted);font-size:.78rem;margin-top:.15rem;line-height:1.4}
+.section{margin-bottom:2.25rem}
+.section-title{font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.75rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
 .form-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:center;margin-bottom:1.25rem}
-.form-grid .vs{color:var(--muted);font-size:.85rem;font-weight:600}
-select,input{font-family:var(--font);font-size:.875rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;outline:none;transition:border-color .15s}
+.form-grid .vs{color:var(--muted);font-size:.8rem;font-weight:600}
+select,input{font-family:var(--font);font-size:.85rem;padding:.5rem .75rem;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--ink);width:100%;outline:none;transition:border-color .15s}
 select:focus,input:focus{border-color:var(--primary)}
 select:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 input[type=number]{font-family:var(--mono);text-align:center;width:100%}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
-.odds-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;align-items:center;margin-bottom:.5rem;padding:.5rem;border-radius:6px;transition:background .15s}
+.odds-row{display:grid;grid-template-columns:1fr 1.2fr 1.2fr;gap:.5rem;align-items:center;margin-bottom:.35rem;padding:.45rem .5rem;border-radius:5px;transition:background .15s}
 .odds-row:hover{background:var(--surface)}
-.odds-row .label{font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.odds-row .label span{display:block;font-weight:400;color:var(--muted);font-size:.7rem;text-transform:none;letter-spacing:0;margin-top:1px}
-#homeLabel,#awayLabel{color:#9aadad!important}
-.btn{font-family:var(--font);font-size:.875rem;font-weight:600;padding:.6rem 1.25rem;border-radius:6px;border:none;cursor:pointer;transition:background .15s,transform .05s;display:inline-flex;align-items:center;gap:.4rem;min-height:44px}
+.odds-row .label{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.odds-row .label span{display:block;font-weight:400;color:var(--muted);font-size:.65rem;text-transform:none;letter-spacing:0;margin-top:1px}
+.btn{font-family:var(--font);font-size:.85rem;font-weight:600;padding:.55rem 1.15rem;border-radius:5px;border:none;cursor:pointer;transition:background .12s,box-shadow .12s;display:inline-flex;align-items:center;gap:.4rem;min-height:40px}
 .btn:active{transform:scale(.97)}
 .btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important}}
 .btn-primary{background:var(--primary);color:oklch(0.95 0 0)}
 .btn-primary:hover{background:var(--primary-hover)}
-.btn-ghost{background:transparent;color:var(--muted);padding:.4rem .75rem;font-size:.8rem}
+.btn-ghost{background:transparent;color:var(--muted);padding:.35rem .65rem;font-size:.78rem}
 .btn-ghost:hover{color:var(--ink)}
 .btn-accent{background:var(--accent);color:oklch(0.95 0 0)}
 .btn-accent:hover{background:var(--accent-hover)}
-.btn-danger{background:transparent;color:var(--error);padding:.4rem .75rem;font-size:.8rem;border:1px solid transparent}
+.btn-danger{background:transparent;color:var(--error);padding:.35rem .65rem;font-size:.78rem;border:1px solid transparent}
 .btn-danger:hover{border-color:var(--error)}
-.btn-group{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
-.results{display:none;margin-top:1.5rem;animation:rfade .4s ease-out}
-@keyframes rfade{from{opacity:0;transform:translateY(.5rem)}to{opacity:1;transform:translateY(0)}}
+.btn-group{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.85rem}
+.results{display:none;margin-top:1.5rem;animation:rfade .35s ease-out}
+@keyframes rfade{from{opacity:0;transform:translateY(.35rem)}to{opacity:1;transform:translateY(0)}}
 .results.visible{display:block}
-.tbl-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tbl-wrap table{min-width:600px}
-.best-pick{background:var(--surface);border:2px solid var(--primary);border-radius:10px;padding:1.25rem;margin-bottom:1rem;position:relative}
-.best-pick .badge{position:absolute;top:-10px;left:1rem;background:var(--primary);color:oklch(0.95 0 0);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .6rem;border-radius:4px}
-.best-pick .match{font-size:1.1rem;font-weight:700;margin-bottom:.25rem}
-.best-pick .pick{font-size:1.05rem;color:var(--primary);font-weight:600;margin-bottom:.25rem}
+.tbl-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.5rem 0}
+.tbl-wrap table{min-width:580px}
+.best-pick{background:var(--surface);border:1px solid var(--primary);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+.best-pick .match{font-size:1.05rem;font-weight:650;margin-bottom:.2rem}
+.best-pick .pick{font-size:1rem;color:var(--primary);font-weight:600;margin-bottom:.2rem}
 .best-pick .pick strong{font-weight:700}
-.best-pick .meta{font-size:.8rem;color:var(--muted);display:flex;gap:1rem;flex-wrap:wrap}
-.conf-high{display:inline-block;background:var(--high-bg);color:var(--high-text);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .5rem;border-radius:4px}
-.conf-med{display:inline-block;background:var(--med-bg);color:var(--med-text);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .5rem;border-radius:4px}
-.conf-low{display:inline-block;background:var(--low-bg);color:var(--low-text);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .5rem;border-radius:4px}
-.options-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.75rem}
-.options-table th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:.5rem;border-bottom:1px solid var(--border);white-space:nowrap}
-.options-table th.num{text-align:right;font-size:.85rem;font-weight:600;font-family:var(--mono);text-transform:none;letter-spacing:0}
-.options-table td{padding:.5rem;border-bottom:1px solid var(--border)}
+.best-pick .meta{font-size:.78rem;color:var(--muted);display:flex;gap:.75rem;flex-wrap:wrap}
+.best-pick .meta > span{white-space:nowrap}
+.conf-high{display:inline-block;background:var(--high-bg);color:var(--high-text);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .45rem;border-radius:3px}
+.conf-med{display:inline-block;background:var(--med-bg);color:var(--med-text);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .45rem;border-radius:3px}
+.conf-low{display:inline-block;background:var(--low-bg);color:var(--low-text);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:.15rem .45rem;border-radius:3px}
+.options-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.options-table th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:.45rem .5rem;border-bottom:1px solid var(--border);white-space:nowrap}
+.options-table th.num{text-align:right;font-size:.65rem;letter-spacing:.05em;font-weight:600;font-family:var(--font);text-transform:uppercase}
+.options-table td{padding:.4rem .5rem;border-bottom:1px solid var(--border)}
 .options-table tr:last-child td{border-bottom:none}
-.options-table .num{font-family:var(--mono);text-align:right}
-.options-table .best{background:var(--surface);border-radius:4px}
-.reasoning{margin-top:1rem;padding:.75rem;background:var(--surface);border-radius:6px;font-size:.825rem;color:var(--muted);line-height:1.6;border-left:3px solid var(--primary);white-space:pre-line}
+.options-table .num{font-family:var(--mono);text-align:right;font-size:.78rem}
+.options-table .best td{font-weight:600}
+.reasoning{margin-top:.85rem;padding:.75rem 1rem;background:var(--surface);border-radius:5px;font-size:.78rem;color:var(--muted);line-height:1.55;border-left:2px solid var(--primary);white-space:pre-line}
 .reasoning strong{color:var(--ink)}
-.ti{cursor:help;font-size:.65rem;color:var(--muted);margin-left:1px}
-.history-item{display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:.5rem;align-items:center;padding:.6rem .75rem;font-size:.8rem;border-bottom:1px solid var(--border)}
+.history-item{display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:.5rem;align-items:center;padding:.55rem .75rem;font-size:.78rem;border-bottom:1px solid var(--border)}
 .history-item:last-child{border-bottom:none}
 .history-item .h-match{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.history-item .h-pick{font-family:var(--mono);font-size:.775rem;color:var(--primary)}
-.history-item .h-odds{font-family:var(--mono);font-size:.775rem}
-.history-item .h-result{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:3px;padding:.1rem .35rem}
+.history-item .h-pick{font-family:var(--mono);font-size:.75rem;color:var(--primary)}
+.history-item .h-odds{font-family:var(--mono);font-size:.75rem}
+.history-item .h-result{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:3px;padding:.1rem .35rem}
 .history-item .h-result.pending{background:var(--surface);color:var(--muted)}
 .history-item .h-result.won{background:var(--high-bg);color:var(--high-text)}
 .history-item .h-result.lost{background:var(--low-bg);color:var(--low-text)}
 .history-item .h-result.draw{background:var(--med-bg);color:var(--med-text)}
 .history-item .h-actions{display:flex;gap:.25rem}
-.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.875rem}
-.team-info{display:none;margin-top:.75rem;padding:.75rem;background:var(--surface);border-radius:6px;font-size:.8rem;border:1px solid var(--border)}
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.85rem}
+.team-info{display:none;margin-top:.75rem;padding:.75rem;background:var(--surface);border-radius:5px;font-size:.78rem;border:1px solid var(--border)}
 .team-info.visible{display:block}
 .team-info .ti-row{display:flex;justify-content:space-between;padding:.2rem 0}
 .team-info .ti-label{color:var(--muted)}
 .team-info .ti-value{font-weight:500}
 .sb-wrap{display:flex;align-items:center;gap:.35rem;margin:.2rem 0}
 .sb-label{font-size:.68rem;color:var(--muted);min-width:6rem;text-align:right}
-.sb-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;position:relative}
-.sb-fill{height:100%;border-radius:3px;transition:width .6s ease-out;width:0}
+.sb-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;position:relative}
+.sb-fill{height:100%;border-radius:2px;transition:width .6s ease-out;width:0}
 .sb-fill.good{background:var(--success)}
 .sb-fill.mid{background:var(--primary)}
 .sb-fill.bad{background:var(--accent)}
-.sb-val{font-size:.7rem;font-weight:600;min-width:2.5rem;font-family:var(--mono);color:var(--ink)}
-.form-note{font-size:.75rem;color:var(--muted);margin-top:.4rem}
+.sb-val{font-size:.68rem;font-weight:600;min-width:2.5rem;font-family:var(--mono);color:var(--ink)}
+.form-note{font-size:.72rem;color:var(--muted);margin-top:.35rem}
 @media(max-width:560px){
 .container{padding:1rem}
 .odds-row{grid-template-columns:1fr}
 .history-item{grid-template-columns:1fr auto;gap:.25rem}
-.sb-label{min-width:4rem;font-size:.62rem}
-.sb-val{min-width:2rem;font-size:.62rem}
-.team-info{font-size:.72rem}
+.sb-label{min-width:4rem;font-size:.6rem}
+.sb-val{min-width:2rem;font-size:.6rem}
+.team-info{font-size:.7rem}
 .inner{padding:1rem}
 .form-grid{grid-template-columns:1fr;gap:.5rem}
 .form-grid .vs{text-align:center}
@@ -186,7 +183,7 @@ input[type=number]{-moz-appearance:textfield}
       <div><strong style="color:var(--ink)">300</strong> agents · <strong style="color:var(--ink)">20</strong> dimensions</div>
       <div>Most probable final: <strong style="color:var(--ink)">ARG-ESP 2.72%</strong></div>
       <div><strong style="color:var(--ink)">48</strong> teams · <strong style="color:var(--ink)">104</strong> matches</div>
-      <div><span title="Estimated total flight distance across 16 host cities in 4 timezones. Affects player fatigue and recovery." style="cursor:help"><span class="ti">ⓘ</span>Group-stage travel</span>: <strong style="color:var(--ink)">3,400km (NOR) – 28,000km (AUS)</strong></div>
+      <div><span title="Estimated total flight distance across 16 host cities in 4 timezones. Affects player fatigue and recovery." style="cursor:help;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px">Group-stage travel</span>: <strong style="color:var(--ink)">3,400km (NOR) – 28,000km (AUS)</strong></div>
     </div>
   </div>
 
@@ -209,7 +206,7 @@ input[type=number]{-moz-appearance:textfield}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem">
       <div><strong style="color:var(--ink)">3rd-place qualifying:</strong><br>4pts=98%<br>3pts+GD≈75%<br>3pts≈50%<br>2pts&lt;10%</div>
       <div><strong style="color:var(--ink)">Monte Carlo finals:</strong><br>ARG-ESP 2.72%<br>ARG-FRA 2.16%<br>ENG-ESP 1.83%</div>
-      <div><strong style="color:var(--ink)">Travel range:</strong> 3,400km (NOR) – 28,000km (AUS) <span title="Estimated total flight distance across 16 host cities in 4 timezones. Affects player fatigue and recovery between matches." style="cursor:help">ⓘ</span></div>
+      <div><strong style="color:var(--ink)">Travel range:</strong> <span title="Estimated total flight distance across 16 host cities in 4 timezones. Affects player fatigue and recovery between matches." style="cursor:help;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px">3,400km (NOR) – 28,000km (AUS)</span></div>
       <div><strong style="color:var(--ink)">Format:</strong><br>39 days<br>104 matches<br>16 cities<br>4 timezones</div>
     </div>
   </div>
@@ -1180,16 +1177,15 @@ function renderResults(teamA,teamB,opts,best){
     ${selectiveMode&&opts.length===0?'<div style="margin-bottom:.75rem;padding:.75rem;background:var(--low-bg);color:var(--low-text);border-radius:6px;font-size:.85rem;text-align:center;font-weight:600">⚠ Skip this match — no bets meet selective criteria (EV 5-25%, cover 55-80%, line ≤ 1.0, MEDIUM+ confidence). Switch to All Matches to see all options.</div>':''}
     ${opts.length?`
     <div class="best-pick">
-      <div class="badge">Best Pick</div>
       <div class="match">${teamA} vs ${teamB}</div>
       <div class="pick"><strong>${sl} ${best.line}</strong> @ ${best.odds.toFixed(3)}</div>
       <div class="meta">
-        <span class="${conf.cls}" title="Confidence: how strong the data supports this pick (HIGH=strong, MEDIUM=moderate, LOW=weak)"><span class="ti">ⓘ</span>${conf.label}</span>
-        <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value."><span class="ti">ⓘ</span>EV: ${dispEv(best.ev,1)}</span>
-        <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line — calculated via Poisson Monte Carlo (5,000 simulations)"><span class="ti">ⓘ</span>Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
-        <span title="Fair odds: the minimum odds needed for this bet to break even (1 ÷ cover %). Your odds should be higher than this."><span class="ti">ⓘ</span>Fair: ${(1/best.cover).toFixed(3)}</span>
-        <span title="Edge = (Your Odds ÷ Fair Odds) − 1. Positive means your odds beat fair value. This is why bigger lines can have higher EV — you entered better odds."><span class="ti">ⓘ</span>Edge: ${best.odds>=(1/best.cover)?'+':''}${((best.odds/(1/best.cover)-1)*100).toFixed(0)}%</span>
-        <span title="Composite Score: weighted blend of EV, team form, matchup context, and odds value (higher = stronger pick)"><span class="ti">ⓘ</span>Score: ${(best.score*100).toFixed(0)}%</span>
+        <span class="${conf.cls}" title="Confidence: how strong the data supports this pick (HIGH=strong, MEDIUM=moderate, LOW=weak)">${conf.label}</span>
+        <span title="Expected Value: how much profit you'd average per bet if this scenario repeated many times. Positive = good value.">EV: ${dispEv(best.ev,1)}</span>
+        <span title="Cover Probability: estimated chance (%) the selected team covers the Asian handicap line — calculated via Poisson Monte Carlo (5,000 simulations)">Est. Cover: ${(best.cover*100).toFixed(0)}%</span>
+        <span title="Fair odds: the minimum odds needed for this bet to break even (1 ÷ cover %). Your odds should be higher than this.">Fair: ${(1/best.cover).toFixed(3)}</span>
+        <span title="Edge = (Your Odds ÷ Fair Odds) − 1. Positive means your odds beat fair value. This is why bigger lines can have higher EV — you entered better odds.">Edge: ${best.odds>=(1/best.cover)?'+':''}${((best.odds/(1/best.cover)-1)*100).toFixed(0)}%</span>
+        <span title="Composite Score: weighted blend of EV, team form, matchup context, and odds value (higher = stronger pick)">Score: ${(best.score*100).toFixed(0)}%</span>
       </div>
     </div>
     ${opts.every(o=>o.ev<0)?'<div style="margin-bottom:.75rem;padding:.5rem;background:var(--low-bg);color:var(--low-text);border-radius:6px;font-size:.8rem;text-align:center;font-weight:600">⚠ All 6 bets show negative EV — no value at these odds. Skip this match or find better prices.</div>':''}
@@ -1216,19 +1212,9 @@ function renderResults(teamA,teamB,opts,best){
     <div class="reasoning">${best.reasoning}</div>
     `:''}
     <div style="margin-top:.75rem;font-size:.65rem;color:var(--muted);border-top:1px solid var(--border);padding:.5rem 0 0;line-height:1.5">
-      <strong style="color:var(--muted)">Data Sources — Kimi 2026 WC Report</strong> (277pg · 114 tables · 300 agents)
-      + <strong style="color:var(--primary)">Live WC Data</strong> (v${VERSION})
-      <span style="display:block;margin-top:.15rem">
-        Elo Table 1.4 · Match predictions · Market divergence ·
-        Injury Table 8.6 · Travel Ch.6.2 · Third-place Ch.4.13 ·
-        Backtest Tables 9.7-9.9 (62.5%/60.4%) · Monte Carlo ·
-        Squad age/depth · Home adv Ch.6.6 (91%) · Altitude Ch.6.5 ·
-        Heat risk Ch.6.4 · Manager data · Polymarket · Streaks ·
-        Title probs Tables 8.1-8.2 · Semi/QF Tables 8.4-8.5 ·
-        Set-piece Table 5.2 · Champion history Table 9.9
-      </span>
-      <span style="display:block;margin-top:.15rem;color:var(--primary)">
-        Live: API-Football (fixtures/stats/injuries) · Sofascore (H2H) · Football-data.org (results)
+      <strong style="color:var(--muted)">Data Sources</strong> — Kimi 2026 WC Report (277pg · 114 tables · 300 agents) · Bayesian Poisson engine · Live WC data sync (v${VERSION})
+      <span style="display:block;margin-top:.1rem;color:var(--primary)">
+        Live: API-Football · Sofascore · Football-data.org
       </span>
     </div>
   `;
@@ -1368,7 +1354,7 @@ function renderHist(){
 
   con.innerHTML=stats+calHTML+h.map(i=>`
     <div class="history-item" style="cursor:pointer" onclick="viewHistory(${i.id})" title="Click to view past analysis report">
-      <span class="h-match">${i.teamA} vs ${i.teamB}<span class="ti">ⓘ</span></span>
+      <span class="h-match">${i.teamA} vs ${i.teamB}</span>
       <span class="h-pick">${i.side==='home'?i.teamA+' ':i.teamB+' '}${i.pick}</span>
       <span class="h-odds">@ ${i.odds.toFixed(3)}</span>
       <span class="h-pick" style="font-size:.7rem;color:var(--primary)">${i.score!==undefined?(i.score*100).toFixed(0):'?'}%</span>
@@ -1390,7 +1376,7 @@ function viewHistory(id){
   if(item.opts&&item.opts.length){
     // Sort by score descending so rank matches Score column
     item.opts.sort((x,y)=>y.score-x.score);
-    optsHTML='<div class="tbl-wrap"><table class="options-table"><tr><th title="Ranking order"><span class="ti">ⓘ</span>#</th><th title="Side: H=Home, A=Away"><span class="ti">ⓘ</span>S</th><th title="The bet selection"><span class="ti">ⓘ</span>Bet</th><th class="num" title="Decimal odds"><span class="ti">ⓘ</span>Odds</th><th class="num" title="Expected Value — positive = value"><span class="ti">ⓘ</span>EV</th><th class="num" title="Cover probability — chance of covering the handicap"><span class="ti">ⓘ</span>Cov</th><th class="num" title="Composite Score — weighted blend of EV, attack, defense, form, context, late goals, matchup, motivation, fatigue, odds, and bonuses. Higher = stronger pick."><span class="ti">ⓘ</span>Score</th><th class="num" title="Confidence level"><span class="ti">ⓘ</span>Conf</th></tr>';
+    optsHTML='<div class="tbl-wrap"><table class="options-table"><tr><th title="Ranking order">#</th><th title="Side: H=Home, A=Away">S</th><th title="The bet selection">Bet</th><th class="num" title="Decimal odds">Odds</th><th class="num" title="Expected Value — positive = value">EV</th><th class="num" title="Cover probability — chance of covering the handicap">Cov</th><th class="num" title="Composite Score — weighted blend of EV + team factors. Higher = stronger pick.">Score</th><th class="num" title="Confidence level">Conf</th></tr>';
     item.opts.forEach((o,i)=>{
       optsHTML+='<tr'+(i===0?' class="best"':'')+'><td>'+(i+1)+'</td><td>'+o.side.charAt(0).toUpperCase()+'</td><td><strong>'+o.line+'</strong></td><td class="num">'+o.odds.toFixed(3)+'</td><td class="num" style="color:'+(o.ev>=0?'var(--success)':'var(--error)')+'">'+dispEv(o.ev)+'</td><td class="num">'+(o.cover*100).toFixed(0)+'%</td><td class="num" style="color:var(--primary)" title="Composite score: blends EV + attack + defense + form + context + late goals + matchup + motivation + fatigue + odds + bonuses. Higher = stronger pick.">'+(o.score!==undefined?(o.score*100).toFixed(0)+'%':Math.max(0,((o.ev||0)*0.5+0.4)).toFixed(2)*100+'%')+'</td><td class="num">'+o.confidence+'</td></tr>';
     });
@@ -1400,7 +1386,6 @@ function viewHistory(id){
   const confCls=item.confidence==='HIGH'?'conf-high':item.confidence==='MEDIUM'?'conf-med':'conf-low';
   el.innerHTML=`
     <div class="best-pick">
-      <div class="badge">History View</div>
       <div class="match">${item.teamA} vs ${item.teamB}</div>
       <div class="pick"><strong>${sideLabel} ${item.pick}</strong> @ ${item.odds.toFixed(3)}</div>
       <div class="meta">
