@@ -1339,6 +1339,30 @@ function renderHist(){
     const color=sr>0?(sw/sr>=.5?'var(--success)':'var(--error)'):'var(--muted)';
     calHTML+='<span style="margin-right:1rem;white-space:nowrap">'+b.label+': <strong style="color:'+color+'">'+sw+'/'+sr+' ('+sp+'%)</strong>'+(sd?' <span style="color:var(--primary)">'+sd+' draw</span>':'')+'</span>';
   });
+  // Favorite vs underdog split
+  const favBets=resolved.filter(x=>parseFloat(x.pick)<0);
+  const dogBets=resolved.filter(x=>parseFloat(x.pick)>0);
+  const fW=favBets.filter(x=>x.result==='won').length;
+  const fL=favBets.filter(x=>x.result==='lost').length;
+  const dW=dogBets.filter(x=>x.result==='won').length;
+  const dL=dogBets.filter(x=>x.result==='lost').length;
+  const fTot=fW+fL,dTot=dW+dL;
+  if(fTot>0)calHTML+='<div style="margin-top:.4rem;border-top:1px solid var(--border);padding-top:.4rem"></div>';
+  if(fTot>0)calHTML+='<span style="margin-right:1rem">Favorites: <strong style="color:'+(fTot>0&&fW/fTot>=.5?'var(--success)':'var(--error)')+'">'+fW+'/'+fTot+' ('+(fTot>0?(fW/fTot*100).toFixed(0):'--')+'%)</strong></span>';
+  if(dTot>0)calHTML+='<span style="margin-right:1rem">Underdogs: <strong style="color:'+(dTot>0&&dW/dTot>=.5?'var(--success)':'var(--error)')+'">'+dW+'/'+dTot+' ('+(dTot>0?(dW/dTot*100).toFixed(0):'--')+'%)</strong></span>';
+  // Running accuracy (last 10, last 20)
+  [10,20].forEach(function(n){
+    if(n>resolved.length)return;
+    const subset=resolved.slice(-n);
+    const sw=subset.filter(x=>x.result==='won').length;
+    const sl=subset.filter(x=>x.result==='lost').length;
+    const sr=sw+sl;
+    if(sr>0)calHTML+='<span style="margin-right:1rem">Last '+n+': <strong style="color:'+(sw/sr>=.5?'var(--success)':'var(--error)')+'">'+sw+'/'+sr+' ('+(sw/sr*100).toFixed(0)+'%)</strong></span>';
+  });
+  // Systematic bias alert
+  if(fTot>=10&&fW/fTot<.45){
+    calHTML+='<div style="margin-top:.35rem;padding:.3rem;background:var(--surface);border:1px solid #c04040;border-radius:4px;font-size:.7rem;color:var(--error)">⚠ Systematic underdog bias: Favorites win rate '+(fW/fTot*100).toFixed(0)+'% in last '+fTot+' bets. Model is over-picking underdogs.</div>';
+  }
   calHTML+='</div></div>';
 
   con.innerHTML=stats+calHTML+h.map(i=>`
