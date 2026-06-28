@@ -974,6 +974,43 @@ function fatigueScore(team){
 
 function oddsScore(imp,hist){return clamp((hist-imp)/.5,.2,1)}
 
+function h2hScoreFn(teamA,teamB){
+  const lv=LIVE_DATA[teamA];
+  if(!lv||!lv.h2h||!lv.h2h[teamB])return.5;
+  const h=lv.h2h[teamB];
+  if(!h||h.total<2)return.5;
+  const wr=h.wins/h.total;
+  return wr;
+}
+
+function setPieceScore(team){
+  const d=gt(team);
+  if(!d||!d.wcMatches||d.wcMatches<1)return.5;
+  let s=.5;
+  if(d.corners>0){
+    const cpg=d.corners/d.wcMatches;
+    if(cpg>7)s+=.1;
+    else if(cpg>5)s+=.05;
+  }
+  return clamp(s,0,1);
+}
+
+function weightedFormScore(team){
+  const d=gt(team);
+  if(!d)return.5;
+  const f=(d.form||'').replace(/-/g,'');
+  if(!f.length)return.5;
+  const m=f.split('').reverse();
+  let pts=0,tot=0;
+  m.forEach((r,i)=>{
+    const w=i<3?2:1;
+    if(r==='W')pts+=3*w;
+    else if(r==='D')pts+=1*w;
+    tot+=3*w;
+  });
+  return tot>0?clamp(pts/tot,0,1):.5;
+}
+
 function confLabel(score,ev,cover,line){
   const absL=Math.abs(parseFloat(line)||0);
   if(score>.50&&ev>.10&&cover>.40&&cover<.70&&absL<=1.5)return{label:'HIGH',cls:'conf-high'};
@@ -1047,7 +1084,13 @@ function scoreBet(teamA,teamB,b,a,bd){
   const moS=motivationScore(pickT,oppT);
   const fS2=fatigueScore(pickT);
 
-  const total=blendedEv*.40+fS*.12+aS*.12+dS*.12+cS*.08+discS*.06+lS*.05;
+  // New factors: H2H history, set-piece efficiency, weighted recent form
+  const h2h=h2hScoreFn(pickT,oppT);
+  const sp=setPieceScore(pickT);
+  // Override form with weighted recent form
+  const wfs=weightedFormScore(pickT);
+
+  const total=blendedEv*.40+wfs*.12+aS*.12+dS*.12+cS*.08+discS*.06+lS*.05+h2h*.05;
 
   const finalScore=Math.min(total,0.85);
   const conf=confLabel(finalScore,blendedEv,finalCover,b.line);
